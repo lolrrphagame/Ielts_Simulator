@@ -1,0 +1,442 @@
+{
+  "formats": {
+    ".json": 24,
+    ".mp3": 20,
+    ".DS_Store": 1,
+    ".m4a": 16,
+    ".png": 281
+  },
+  "totalFiles": 342,
+  "unchangedFromBaseline": true,
+  "tests": [
+    {
+      "id": "19-1",
+      "answerEntries": 40,
+      "pages": [
+        "page_9",
+        "page_10",
+        "page_11",
+        "page_12",
+        "page_13",
+        "page_14"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mpeg",
+          "bytes": 7563057,
+          "duration": 472.6595918367347
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mpeg",
+          "bytes": 6996304,
+          "duration": 437.23755102040815
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mpeg",
+          "bytes": 6724631,
+          "duration": 420.25795918367345
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mpeg",
+          "bytes": 6637277,
+          "duration": 414.7983673469388
+        }
+      ],
+      "durationSeconds": 1865,
+      "verification": "mapped",
+      "warnings": []
+    },
+    {
+      "id": "19-2",
+      "answerEntries": 40,
+      "pages": [
+        "page_32",
+        "page_33",
+        "page_34",
+        "page_35",
+        "page_36",
+        "page_37",
+        "page_38"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mpeg",
+          "bytes": 7711015,
+          "duration": 481.9069387755102
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mpeg",
+          "bytes": 6147011,
+          "duration": 384.1567346938775
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mpeg",
+          "bytes": 6573330,
+          "duration": 410.80163265306123
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mpeg",
+          "bytes": 6832046,
+          "duration": 426.9714285714286
+        }
+      ],
+      "durationSeconds": 1824,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "19-3",
+      "answerEntries": 40,
+      "pages": [
+        "page_54",
+        "page_55",
+        "page_56",
+        "page_57",
+        "page_58",
+        "page_59",
+        "page_60"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mpeg",
+          "bytes": 6339690,
+          "duration": 396.1991836734694
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mpeg",
+          "bytes": 5949735,
+          "duration": 371.8269387755102
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mpeg",
+          "bytes": 6755142,
+          "duration": 422.1648979591837
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mpeg",
+          "bytes": 6567478,
+          "duration": 410.4359183673469
+        }
+      ],
+      "durationSeconds": 1721,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "19-4",
+      "answerEntries": 40,
+      "pages": [
+        "page_77",
+        "page_78",
+        "page_79",
+        "page_80",
+        "page_81",
+        "page_82"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mpeg",
+          "bytes": 6483050,
+          "duration": 405.1591836734694
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mpeg",
+          "bytes": 6226424,
+          "duration": 389.12
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mpeg",
+          "bytes": 6870917,
+          "duration": 429.4008163265306
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mpeg",
+          "bytes": 8303263,
+          "duration": 518.9224489795919
+        }
+      ],
+      "durationSeconds": 1863,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "20-1",
+      "answerEntries": 40,
+      "pages": [
+        "page_5",
+        "page_6",
+        "page_7",
+        "page_8",
+        "page_9",
+        "page_10",
+        "page_11"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mp4",
+          "bytes": 4237598,
+          "duration": 501.318820861678
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mp4",
+          "bytes": 4935001,
+          "duration": 514.5541950113379
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mp4",
+          "bytes": 4730824,
+          "duration": 479.027664399093
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mp4",
+          "bytes": 4291608,
+          "duration": 472.57251700680274
+        }
+      ],
+      "durationSeconds": 2088,
+      "verification": "source-sheet",
+      "warnings": [
+        "Questions 17–18: the source image labels conflict with the answer key. These two answers are excluded from scoring; the original files are unchanged."
+      ]
+    },
+    {
+      "id": "20-2",
+      "answerEntries": 40,
+      "pages": [
+        "page_41",
+        "page_42",
+        "page_43",
+        "page_44",
+        "page_45",
+        "page_46",
+        "page_47"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mp4",
+          "bytes": 3212744,
+          "duration": 408.2532426303855
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mp4",
+          "bytes": 3936359,
+          "duration": 428.8957823129252
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mp4",
+          "bytes": 3703012,
+          "duration": 422.4406349206349
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mp4",
+          "bytes": 7592388,
+          "duration": 571.4663038548753
+        }
+      ],
+      "durationSeconds": 1952,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "20-3",
+      "answerEntries": 40,
+      "pages": [
+        "page_79",
+        "page_80",
+        "page_81",
+        "page_82",
+        "page_83",
+        "page_84",
+        "page_85",
+        "page_86"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mp4",
+          "bytes": 3616055,
+          "duration": 439.6930612244898
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mp4",
+          "bytes": 4092740,
+          "duration": 525.421133786848
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mp4",
+          "bytes": 4299034,
+          "duration": 446.5661678004535
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mp4",
+          "bytes": 7205184,
+          "duration": 512.9984580498866
+        }
+      ],
+      "durationSeconds": 2045,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "20-4",
+      "answerEntries": 40,
+      "pages": [
+        "page_116",
+        "page_117",
+        "page_118",
+        "page_119",
+        "page_120",
+        "page_121",
+        "page_122"
+      ],
+      "audio": [
+        {
+          "id": "section-1",
+          "mime": "audio/mp4",
+          "bytes": 3943502,
+          "duration": 442.34013605442175
+        },
+        {
+          "id": "section-2",
+          "mime": "audio/mp4",
+          "bytes": 4648724,
+          "duration": 508.49378684807255
+        },
+        {
+          "id": "section-3",
+          "mime": "audio/mp4",
+          "bytes": 4641883,
+          "duration": 472.7350566893424
+        },
+        {
+          "id": "section-4",
+          "mime": "audio/mp4",
+          "bytes": 4252848,
+          "duration": 482.74285714285713
+        }
+      ],
+      "durationSeconds": 2027,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "21-1",
+      "answerEntries": 40,
+      "pages": [
+        "page_11",
+        "page_12",
+        "page_13",
+        "page_14",
+        "page_15",
+        "page_16"
+      ],
+      "audio": [
+        {
+          "id": "full",
+          "mime": "audio/mpeg",
+          "bytes": 45606680,
+          "duration": 1856.3395918367346
+        }
+      ],
+      "durationSeconds": 1977,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "21-2",
+      "answerEntries": 40,
+      "pages": [
+        "page_33",
+        "page_34",
+        "page_35",
+        "page_36",
+        "page_37",
+        "page_38"
+      ],
+      "audio": [
+        {
+          "id": "full",
+          "mime": "audio/mpeg",
+          "bytes": 43317091,
+          "duration": 1760.9404081632654
+        }
+      ],
+      "durationSeconds": 1881,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "21-3",
+      "answerEntries": 40,
+      "pages": [
+        "page_55",
+        "page_56",
+        "page_57",
+        "page_58",
+        "page_59",
+        "page_60"
+      ],
+      "audio": [
+        {
+          "id": "full",
+          "mime": "audio/mpeg",
+          "bytes": 43799207,
+          "duration": 1781.0285714285715
+        }
+      ],
+      "durationSeconds": 1902,
+      "verification": "source-sheet",
+      "warnings": []
+    },
+    {
+      "id": "21-4",
+      "answerEntries": 40,
+      "pages": [
+        "page_76",
+        "page_77",
+        "page_78",
+        "page_79",
+        "page_80",
+        "page_81"
+      ],
+      "audio": [
+        {
+          "id": "full",
+          "mime": "audio/mpeg",
+          "bytes": 41354146,
+          "duration": 1679.1510204081633
+        }
+      ],
+      "durationSeconds": 1800,
+      "verification": "source-sheet",
+      "warnings": []
+    }
+  ]
+}

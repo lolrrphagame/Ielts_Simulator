@@ -3,24 +3,39 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/local-server.mjs --dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "node scripts/local-server.mjs",
+    "lint": "eslint",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "audit:assets": "tsx scripts/audit-assets.ts",
+    "content:inventory": "tsx scripts/convert-content.ts inventory",
+    "content:quality": "tsx scripts/convert-content.ts quality",
+    "content:batch": "tsx scripts/convert-content.ts batch",
+    "content:verify": "tsx scripts/convert-content.ts verify",
+    "content:report": "tsx scripts/convert-content.ts report"
   },
   "dependencies": {
+    "music-metadata": "^12.3.2",
     "next": "16.4.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "prettier": "^3.9.10",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
+    "tesseract.js": "^7.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

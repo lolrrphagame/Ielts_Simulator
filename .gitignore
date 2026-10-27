@@ -1,6 +1,7 @@
 private-assets/
 audio/
 answers/
+/private-content/
 *.rar
 
 **/.env.local

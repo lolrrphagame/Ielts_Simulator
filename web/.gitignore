@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local access secret, attempts, audit hashes and browser artifacts
+/.local/
+/test-results/
+/playwright-report/
