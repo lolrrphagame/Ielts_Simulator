@@ -1,5 +1,8 @@
 private-assets/
+audio/
+answers/
 *.rar
+
 **/.env.local
 **/node_modules/
 **/.next/
