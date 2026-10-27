@@ -1,0 +1,5 @@
+private-assets/
+*.rar
+**/.env.local
+**/node_modules/
+**/.next/
