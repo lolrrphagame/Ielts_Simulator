@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { ConversionDetail } from "@/lib/conversion";
@@ -45,18 +51,58 @@ export function StudyWorkspace({
     return [1, 2, 3].includes(number) ? number : 1;
   });
   const columns = useRef<HTMLDivElement>(null);
+  const passagePane = useRef<HTMLElement>(null),
+    questionsPane = useRef<HTMLElement>(null);
+  const scrollPositions = useRef<
+    Record<number, { passage: number; questions: number }>
+  >({});
+  useLayoutEffect(() => {
+    const saved = scrollPositions.current[passageNumber];
+    if (passagePane.current)
+      passagePane.current.scrollTop = saved?.passage ?? 0;
+    if (questionsPane.current)
+      questionsPane.current.scrollTop = saved?.questions ?? 0;
+  }, [passageNumber]);
   const locked = !!draft.submission || submitting;
   const answered = Array.from({ length: 40 }, (_, i) =>
     draft.responses[i + 1]?.trim(),
   ).filter(Boolean).length;
   function goToPassage(n: number) {
+    scrollPositions.current[passageNumber] = {
+      passage: passagePane.current?.scrollTop ?? 0,
+      questions: questionsPane.current?.scrollTop ?? 0,
+    };
     setPassageNumber(n);
     setScan(false);
     const url = new URL(window.location.href);
     url.searchParams.set("passage", String(n));
     window.history.replaceState(null, "", url);
   }
-  const content = detail.reviewed;
+  const approvedReading =
+    detail.reviewed?.kind === "reading" ? detail.reviewed : undefined;
+  const practice = detail.practiceReading;
+  const baseReading = approvedReading ?? practice?.document;
+  const content = baseReading
+    ? {
+        ...baseReading,
+        sourcePages: [
+          ...baseReading.sourcePages,
+          ...(practice?.document.sourcePages ?? []).filter(
+            (s) => !baseReading.sourcePages.some((old) => old.page === s.page),
+          ),
+        ],
+        passages: [
+          ...(approvedReading?.passages ?? []),
+          ...(practice?.document.passages ?? []).filter(
+            (p) => !approvedReading?.passages.some((old) => old.id === p.id),
+          ),
+        ],
+      }
+    : detail.reviewed;
+  const passageReviewed =
+    approvedReading?.passages.some(
+      (p) => p.id === `passage-${passageNumber}`,
+    ) ?? false;
   const answer = (number: string, value: string) =>
     onChange({ responses: { ...draft.responses, [number]: value } });
   const verified = !!content || !!detail.cards;
@@ -156,18 +202,12 @@ export function StudyWorkspace({
               <button
                 key={n}
                 aria-pressed={passageNumber === n}
-                onClick={() => {
-                  setPassageNumber(n);
-                  setScan(false);
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("passage", String(n));
-                  window.history.replaceState(null, "", url);
-                }}
+                onClick={() => goToPassage(n)}
               >
                 Passage {n}
-                {!content.passages.some((p) => p.id === `passage-${n}`) && (
-                  <small> · Needs Review</small>
-                )}
+                {!approvedReading?.passages.some(
+                  (p) => p.id === `passage-${n}`,
+                ) && <small> · Needs Review</small>}
               </button>
             ))}
           </nav>
@@ -175,7 +215,7 @@ export function StudyWorkspace({
             <strong>
               Passage {passageNumber} ·{" "}
               {passage
-                ? `Verified · Questions ${passageQuestions[0]}–${passageQuestions.at(-1)}`
+                ? `${passageReviewed ? "Verified" : "Needs Review"} · Questions ${passageQuestions[0]}–${passageQuestions.at(-1)}`
                 : "Needs Review"}
             </strong>
             <label>
@@ -190,6 +230,24 @@ export function StudyWorkspace({
               />
             </label>
           </div>
+          {passage && !passageReviewed && practice && (
+            <aside className="practice-review-notice">
+              <strong>Needs Review — awaiting human review</strong>
+              <p>
+                This Practice transcription was compared to source scans using
+                AI-assisted tools. It is not approved for Exam Mode or full-test
+                grading.
+              </p>
+              <details>
+                <summary>Source comparison notes</summary>
+                <ul>
+                  {practice.reviewNotes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </details>
+            </aside>
+          )}
           {!draft.submission &&
             detail.readingScoring &&
             !detail.readingScoring.available && (
@@ -217,6 +275,7 @@ export function StudyWorkspace({
                 }
               >
                 <section
+                  ref={passagePane}
                   className="reading-passage"
                   aria-label="Reading passage"
                 >
@@ -297,6 +356,7 @@ export function StudyWorkspace({
                   }}
                 />
                 <section
+                  ref={questionsPane}
                   className="reading-questions"
                   aria-label="Reading questions"
                 >
@@ -493,6 +553,7 @@ function ReadingQuestions({
           {mark(`${g.id}-instruction-${i}`, line)}
         </p>
       ))}
+      {g.bankKind === "paragraphs" && <ReadingBank group={g} mark={mark} />}
       <div className="reading-group-body">
         {g.heading && (
           <h3 className="reading-notes-title">
@@ -636,7 +697,9 @@ function ReadingQuestions({
                       <option value="">Choose an answer</option>
                       {q.options.map((o) => (
                         <option key={o} value={o}>
-                          {o}
+                          {g.bankKind === "paragraphs"
+                            ? `${o} — Paragraph ${o}`
+                            : o}
                         </option>
                       ))}
                     </select>
@@ -664,18 +727,49 @@ function ReadingQuestions({
           })}
         </fieldset>
       </div>
-      {g.bank && (
-        <dl className="reading-phrase-bank" aria-label="Phrase choices">
-          {g.bank.map((choice) => (
-            <div key={choice.value}>
-              <dt>{choice.value}</dt>
-              <dd>{mark(`${g.id}-phrase-${choice.value}`, choice.label)}</dd>
-            </div>
-          ))}
-        </dl>
+      {g.bank && g.bankKind !== "paragraphs" && (
+        <ReadingBank group={g} mark={mark} />
       )}
     </section>
   ));
+}
+
+function ReadingBank({
+  group: g,
+  mark,
+}: {
+  group: ReadingPassage["groups"][number];
+  mark: (id: string, text: string) => ReactNode;
+}) {
+  if (!g.bank) return null;
+  return (
+    <div>
+      {g.bankKind === "paragraphs" && (
+        <p className="matching-bank-caption">
+          Paragraph references — opening sentences from the source
+        </p>
+      )}
+      <dl
+        className={
+          g.bankKind === "paragraphs"
+            ? "reading-paragraph-bank"
+            : "reading-phrase-bank"
+        }
+        aria-label={
+          g.bankKind === "paragraphs"
+            ? "Paragraph matching bank"
+            : "Phrase choices"
+        }
+      >
+        {g.bank.map((choice) => (
+          <div key={choice.value} className="reading-bank-row">
+            <dt>{choice.value}</dt>
+            <dd>{mark(`${g.id}-phrase-${choice.value}`, choice.label)}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
 }
 
 function ChartZoom({ url, onClose }: { url: string; onClose: () => void }) {

@@ -14,6 +14,7 @@ import { loadQuestionDocument } from "./question-content";
 import { reviewedStudy } from "./reviewed-study";
 import { validateCompleteReading } from "../study-content";
 import { validateReadingKey } from "../reading/grading";
+import { practiceReading } from "./practice-reading";
 
 export const convertedRoot = path.join(projectRoot, "private-content");
 export const digest = (value: Buffer | string) =>
@@ -184,6 +185,7 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
         )
       : null;
   const reviewed = await reviewedStudy(directory);
+  const practice=await practiceReading(directory);
   const readingScoring =
     unit.skill === "reading"
       ? await (await import("./reading-grading")).readingScoringAvailability(id)
@@ -195,6 +197,7 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
     documents,
     ...(cards ? { cards } : {}),
     ...(reviewed ? { reviewed } : {}),
+    ...(practice ? {practiceReading:practice} : {}),
     ...(readingScoring ? { readingScoring } : {}),
   };
 }

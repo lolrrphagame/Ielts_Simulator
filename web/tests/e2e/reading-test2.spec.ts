@@ -95,7 +95,14 @@ test("C19 T2: actual Passage 1 notes/TFNG, separate attempts, annotations/resume
   await expect(
     page.getByRole("button", { name: "Submit Reading", exact: true }),
   ).toHaveCount(0);
-  for (const n of [2, 3]) {
+  await page.getByRole("button", { name: /^Passage 2/ }).click();
+  await expect(page.locator(".practice-review-notice")).toContainText(
+    "awaiting human review",
+  );
+  await expect(
+    page.getByLabel("Answer for question 14", { exact: true }),
+  ).toBeVisible();
+  for (const n of [3]) {
     await page
       .getByRole("button", { name: new RegExp(`Passage ${n}`) })
       .click();

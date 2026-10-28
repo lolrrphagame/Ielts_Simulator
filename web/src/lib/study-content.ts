@@ -23,6 +23,7 @@ export type ReadingPassage = {
     layout?: "summary" | "notes";
     heading?: string;
     bank?: { value: string; label: string }[];
+    bankKind?: "paragraphs";
   }[];
 };
 export type WritingTask = {
@@ -138,7 +139,10 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
             "layout",
             "bank",
             "heading",
+            "bankKind",
           ]);
+          if (g.bankKind !== undefined && g.bankKind !== "paragraphs")
+            throw Error("Invalid matching bank kind");
           if (
             g.layout !== undefined &&
             !["summary", "notes"].includes(String(g.layout))
@@ -158,6 +162,9 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
               : {}),
             ...(g.layout ? { layout: g.layout as "summary" | "notes" } : {}),
             ...(g.heading ? { heading: text(g.heading) } : {}),
+            ...(g.bankKind === "paragraphs"
+              ? { bankKind: "paragraphs" as const }
+              : {}),
             questions: list(g.questions).map((entry) => {
               const q = object(entry, [
                 "number",

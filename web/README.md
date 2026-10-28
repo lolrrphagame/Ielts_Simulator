@@ -26,6 +26,8 @@ Cambridge 20 Test 1 có xung đột nguồn ở câu 17–18: lưu nhưng không
 
 ## Kiểm tra
 
+Phase 5B.1: C19 T2 Passage 2/câu 14–26 có bản HTML tương tác trong Practice, gắn **Needs Review — awaiting human review**. Nội dung Passage 1 và evidence cũ được giữ nguyên; Passage 3 và full-test grading vẫn khóa. Xem [QA Phase 5B.1](../QA_PHASE_5B_1.md).
+
 Phase 5A: Reading engine dùng chung theo unit, yêu cầu đủ ba passage Verified và key hợp lệ trước khi chấm. C19 T2 đã có Passage 1/câu 1–13 trong Practice; Passage 2–3 còn Needs Review nên chưa mở nộp/chấm cả bài. Xem [engine dùng chung](docs/reusable-reading-engine.md) và [QA Phase 5A](../QA_PHASE_5A.md).
 
 Phase 4C: Cambridge 19 Test 1 Reading có **Submit Reading**, chấm trên server, kết quả và review đáp án sau nộp. Lịch sử có **View Results**; bài đã nộp chỉ đọc. Band là ước tính; thời gian hoạt động chưa được ghi nên hiển thị Not recorded. Xem [Reading scoring](docs/reading-scoring.md) và [QA Phase 4C](../QA_PHASE_4C.md).

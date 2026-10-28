@@ -1,5 +1,7 @@
 # Reusable Reading engine — Phase 5A
 
+Phase 5B.1: T2 Passage 2 is now available as **Needs Review Practice content**, not human-approved content. It is loaded from a separate `practice-draft.json`; the original Passage 1 document/evidence remain byte-for-byte unchanged. `practiceReading` validates the typed content and source hashes but never confers verification. The workspace merges missing draft passages only for display, labels their pending status, and preserves per-passage column scroll during switching. The grader/certifier still uses only reviewed content and full-unit evidence. See [Phase 5B.1 QA](../../QA_PHASE_5B_1.md).
+
 Reading grading now resolves the validated catalog unit (`19/20/21`, tests `1–4`) through `unitParts`, instead of accepting only `19-1-reading`. The key path is derived on the server from that unit. There is no client-selected filename or client-side answer-key import.
 
 ## Full-test grading contract

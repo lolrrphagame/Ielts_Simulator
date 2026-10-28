@@ -39,6 +39,7 @@ export type ConversionUnit = {
 export type ConversionDetail = {
   readingScoring?: { available: boolean; reason?: string };
   reviewed?: import("./study-content").ReviewedStudy;
+  practiceReading?: import("./server/practice-reading").PracticeReading;
   unit: ConversionUnit;
   pages: { name: string; sourceUrl: string; ocr: OcrPage | null }[];
   crops: {
