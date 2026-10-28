@@ -26,6 +26,8 @@ Cambridge 20 Test 1 có xung đột nguồn ở câu 17–18: lưu nhưng không
 
 ## Kiểm tra
 
+Phase 5A: Reading engine dùng chung theo unit, yêu cầu đủ ba passage Verified và key hợp lệ trước khi chấm. C19 T2 đã có Passage 1/câu 1–13 trong Practice; Passage 2–3 còn Needs Review nên chưa mở nộp/chấm cả bài. Xem [engine dùng chung](docs/reusable-reading-engine.md) và [QA Phase 5A](../QA_PHASE_5A.md).
+
 Phase 4C: Cambridge 19 Test 1 Reading có **Submit Reading**, chấm trên server, kết quả và review đáp án sau nộp. Lịch sử có **View Results**; bài đã nộp chỉ đọc. Band là ước tính; thời gian hoạt động chưa được ghi nên hiển thị Not recorded. Xem [Reading scoring](docs/reading-scoring.md) và [QA Phase 4C](../QA_PHASE_4C.md).
 
 Reading: chọn **Start New Attempt** để bắt đầu với đáp án trống, hoặc **Resume Attempt** để tiếp tục bài đã lưu. **Previous saved draft** giữ bài cũ trước khi có cơ chế nhiều lượt làm. Mỗi lượt lưu riêng đáp án, highlight và ghi chú.

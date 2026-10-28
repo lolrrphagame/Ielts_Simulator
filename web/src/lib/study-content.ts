@@ -5,6 +5,7 @@ export type ReadingQuestion = {
   options?: string[];
   numbers?: number[];
   choices?: { value: string; label: string }[];
+  context?: { kind: "heading" | "bullet"; text: string }[];
 };
 export type ReadingPassage = {
   id: string;
@@ -19,7 +20,8 @@ export type ReadingPassage = {
     title: string;
     instructions: string[];
     questions: ReadingQuestion[];
-    layout?: "summary";
+    layout?: "summary" | "notes";
+    heading?: string;
     bank?: { value: string; label: string }[];
   }[];
 };
@@ -135,8 +137,12 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
             "questions",
             "layout",
             "bank",
+            "heading",
           ]);
-          if (g.layout !== undefined && g.layout !== "summary")
+          if (
+            g.layout !== undefined &&
+            !["summary", "notes"].includes(String(g.layout))
+          )
             throw Error("Invalid question layout");
           return {
             id: id(g.id),
@@ -150,7 +156,8 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                   }),
                 }
               : {}),
-            ...(g.layout ? { layout: "summary" as const } : {}),
+            ...(g.layout ? { layout: g.layout as "summary" | "notes" } : {}),
+            ...(g.heading ? { heading: text(g.heading) } : {}),
             questions: list(g.questions).map((entry) => {
               const q = object(entry, [
                 "number",
@@ -159,6 +166,7 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                 "options",
                 "numbers",
                 "choices",
+                "context",
               ]);
               if (
                 !Number.isInteger(q.number) ||
@@ -212,6 +220,19 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                 after: text(q.after),
                 ...(q.options ? { options: list(q.options).map(text) } : {}),
                 ...multiple,
+                ...(q.context
+                  ? {
+                      context: list(q.context).map((entry) => {
+                        const b = object(entry, ["kind", "text"]);
+                        if (b.kind !== "heading" && b.kind !== "bullet")
+                          throw Error("Invalid question context");
+                        return {
+                          kind: b.kind as "heading" | "bullet",
+                          text: text(b.text),
+                        };
+                      }),
+                    }
+                  : {}),
               };
             }),
           };
@@ -257,14 +278,13 @@ export function validateCompleteReading(content: ReviewedStudy) {
     slots.join() !== Array.from({ length: 40 }, (_, i) => i + 1).join()
   )
     throw Error("Reading requires 40 unique answer positions");
-  for (const [i, p] of content.passages.entries()) {
-    const expected = i === 2 ? 14 : 13;
+  for (const p of content.passages) {
     if (
       !p.paragraphs.length ||
       !p.sourcePages?.length ||
       p.groups.flatMap((g) =>
         g.questions.flatMap((q) => q.numbers ?? [q.number]),
-      ).length !== expected
+      ).length === 0
     )
       throw Error("Incomplete passage coverage");
     for (const g of p.groups)

@@ -37,6 +37,7 @@ export type ConversionUnit = {
   issues: string[];
 };
 export type ConversionDetail = {
+  readingScoring?: { available: boolean; reason?: string };
   reviewed?: import("./study-content").ReviewedStudy;
   unit: ConversionUnit;
   pages: { name: string; sourceUrl: string; ocr: OcrPage | null }[];

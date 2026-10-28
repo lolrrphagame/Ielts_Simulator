@@ -190,6 +190,14 @@ export function StudyWorkspace({
               />
             </label>
           </div>
+          {!draft.submission &&
+            detail.readingScoring &&
+            !detail.readingScoring.available && (
+              <p className="workspace-alert">
+                {detail.readingScoring.reason} You can practise the reviewed
+                passages and keep your saved answers and annotations.
+              </p>
+            )}
           <AnnotationSurface
             key={passageNumber}
             contentId={`${detail.unit.id}-reviewed-reading-v1`}
@@ -471,7 +479,13 @@ function ReadingQuestions({
   return passage.groups.map((g) => (
     <section
       key={g.id}
-      className={g.layout === "summary" ? "reading-summary" : undefined}
+      className={
+        g.layout === "summary"
+          ? "reading-summary"
+          : g.layout === "notes"
+            ? "reading-notes"
+            : undefined
+      }
     >
       <h2>{mark(`${g.id}-title`, g.title)}</h2>
       {g.instructions.map((line, i) => (
@@ -480,6 +494,11 @@ function ReadingQuestions({
         </p>
       ))}
       <div className="reading-group-body">
+        {g.heading && (
+          <h3 className="reading-notes-title">
+            {mark(`${g.id}-heading`, g.heading)}
+          </h3>
+        )}
         <fieldset disabled={disabled} className="reading-question-fields">
           {g.questions.map((q) => {
             const selected = (q.numbers ?? [])
@@ -491,6 +510,17 @@ function ReadingQuestions({
                 key={q.number}
                 id={`reading-question-${q.number}`}
               >
+                {q.context?.map((block, i) =>
+                  block.kind === "heading" ? (
+                    <h4 className="reading-note-heading" key={i}>
+                      {mark(`reading-q${q.number}-context-${i}`, block.text)}
+                    </h4>
+                  ) : (
+                    <p className="reading-static-note" key={i}>
+                      {mark(`reading-q${q.number}-context-${i}`, block.text)}
+                    </p>
+                  ),
+                )}
                 {q.numbers && q.choices ? (
                   <fieldset className="reading-multiple">
                     <legend>Questions {q.numbers.join("–")}</legend>

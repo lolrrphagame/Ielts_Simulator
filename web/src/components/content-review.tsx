@@ -296,7 +296,7 @@ function ReviewUnit({
         status={status}
         error={error}
         submitting={submitting}
-        onSubmit={id === "19-1-reading" && attempt ? submitReading : undefined}
+        onSubmit={detail.readingScoring?.available && attempt ? submitReading : undefined}
       />
     );
   const page = detail.pages[pageIndex];

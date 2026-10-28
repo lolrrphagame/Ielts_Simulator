@@ -1,6 +1,6 @@
 # Reading scoring and results — Phase 4C
 
-Scope: Cambridge 19 Test 1 Academic Reading, all 40 positions, in the existing Practice/Exam study workspace. No AI grading. Source assets and answer keys are read-only and private.
+Phase 5A update: the adapter now resolves any supported Reading unit dynamically and requires verified full content plus a valid private key. C19 T1 is still the complete, scoring-ready real exam; C19 T2 currently has only reviewed Passage 1, so full submission stays locked. See [reusable engine](reusable-reading-engine.md). No AI grading. Source assets and answer keys are read-only and private.
 
 ## Grading
 

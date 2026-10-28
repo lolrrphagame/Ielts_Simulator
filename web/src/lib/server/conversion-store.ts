@@ -13,6 +13,7 @@ import { projectRoot, containedFile } from "./assets";
 import { loadQuestionDocument } from "./question-content";
 import { reviewedStudy } from "./reviewed-study";
 import { validateCompleteReading } from "../study-content";
+import { validateReadingKey } from "../reading/grading";
 
 export const convertedRoot = path.join(projectRoot, "private-content");
 export const digest = (value: Buffer | string) =>
@@ -183,6 +184,10 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
         )
       : null;
   const reviewed = await reviewedStudy(directory);
+  const readingScoring =
+    unit.skill === "reading"
+      ? await (await import("./reading-grading")).readingScoringAvailability(id)
+      : undefined;
   return {
     unit,
     pages,
@@ -190,6 +195,7 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
     documents,
     ...(cards ? { cards } : {}),
     ...(reviewed ? { reviewed } : {}),
+    ...(readingScoring ? { readingScoring } : {}),
   };
 }
 export async function certify(id: string, reviewer: string) {
@@ -247,6 +253,7 @@ export async function certify(id: string, reviewer: string) {
     const key = parseAnswerKey(
       JSON.parse(await readFile(await containedFile(keyPath), "utf8")),
     );
+    validateReadingKey(reviewed, key);
     for (const q of reviewed.passages.flatMap((p) =>
       p.groups.flatMap((g) => g.questions),
     )) {

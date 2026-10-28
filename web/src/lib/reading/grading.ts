@@ -9,6 +9,35 @@ import {
 } from "./schema";
 
 // Called only on the server with a private key. No fuzzy spelling or guessed aliases.
+export function validateReadingKey(content: ReviewedStudy, answerKey: unknown) {
+  if (content.kind !== "reading") throw Error("Reading content required");
+  const key = parseAnswerKey(answerKey);
+  for (const q of content.passages.flatMap((p) =>
+    p.groups.flatMap((g) => g.questions),
+  )) {
+    const allowed = q.options ?? q.choices?.map((c) => c.value);
+    const numbers = q.numbers ?? [q.number];
+    for (const n of numbers)
+      if (
+        allowed &&
+        key[n].some((a) => !allowed.map(normalize).includes(normalize(a)))
+      )
+        throw Error("Private key does not match question options");
+    if (q.numbers) {
+      const expected = [...new Set(key[numbers[0]].map(normalize))].sort();
+      if (
+        expected.length !== numbers.length ||
+        numbers.some(
+          (n) =>
+            [...new Set(key[n].map(normalize))].sort().join() !==
+            expected.join(),
+        )
+      )
+        throw Error("Invalid multiple-answer key mapping");
+    }
+  }
+  return key;
+}
 export function gradeReading(
   content: ReviewedStudy,
   answerKey: unknown,
@@ -16,7 +45,7 @@ export function gradeReading(
 ): ReadingResult {
   validateCompleteReading(content);
   if (content.kind !== "reading") throw Error("Reading content required");
-  const key = parseAnswerKey(answerKey),
+  const key = validateReadingKey(content, answerKey),
     responses = parseReadingResponses(supplied);
   const marks: ReadingMark[] = [];
   for (const [index, passage] of content.passages.entries())

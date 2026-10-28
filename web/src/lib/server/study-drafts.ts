@@ -8,7 +8,8 @@ import { localDataRoot } from "./local-data";
 import { requireReadingAttempt } from "./reading-attempts";
 import type { ReadingSubmission } from "../reading/schema";
 import { parseReadingResponses } from "../reading/schema";
-import { gradeSavedReading } from "./reading-grading";
+import { loadReadingGradingInput } from "./reading-grading";
+import { gradeReading } from "../reading/grading";
 export type StudyDraft = {
   revision: number;
   responses: Record<string, string>;
@@ -61,6 +62,9 @@ export async function studyDraft(
       if (submit) throw new HttpError(400, "Final answers are required.");
       return current;
     }
+    // Submitted history above never depends on the current key/content. A new
+    // submission must pass preflight before it can change the saved draft.
+    const grading = submit ? await loadReadingGradingInput(id) : undefined;
     const v = update as StudyDraft;
     if (!v || v.revision !== current.revision)
       throw new HttpError(
@@ -114,7 +118,11 @@ export async function studyDraft(
       // Save pending changes first, then grade this exact server snapshot while
       // holding the same lock used by autosave and competing submissions.
       const snapshot: StudyDraft = JSON.parse(await readFile(file, "utf8"));
-      const result = await gradeSavedReading(id, snapshot.responses);
+      const result = gradeReading(
+        grading!.content,
+        grading!.key,
+        snapshot.responses,
+      );
       const submitted: StudyDraft = {
         ...snapshot,
         revision: snapshot.revision + 1,
