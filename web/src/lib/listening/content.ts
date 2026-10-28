@@ -12,6 +12,8 @@ export type ContentBlock = {
     limit: number;
   };
   image?: { assetId: string; alt: string };
+  table?: { headers?: string[]; rows: ContentRun[][][] };
+  bank?: { title: string; options: { value: string; label: string }[] };
 };
 export type QuestionDocument = {
   schemaVersion: 1;
@@ -80,6 +82,14 @@ function parseText(value: unknown): TextRun {
     ...(v.emphasis ? { emphasis: "strong" as const } : {}),
   };
 }
+function parseRun(entry: unknown): ContentRun {
+  const run = record(entry);
+  if (run.kind === "gap") {
+    exact(run, ["kind", "question"]);
+    return { kind: "gap", question: integer(run.question, 1, 40) };
+  }
+  return parseText(run);
+}
 export function parseDocument(value: unknown): QuestionDocument {
   const v = record(value);
   exact(v, [
@@ -108,7 +118,16 @@ export function parseDocument(value: unknown): QuestionDocument {
   );
   const blocks = list(v.blocks, 200).map((entry): ContentBlock => {
     const b = record(entry);
-    exact(b, ["id", "kind", "depth", "runs", "interaction", "image"]);
+    exact(b, [
+      "id",
+      "kind",
+      "depth",
+      "runs",
+      "interaction",
+      "image",
+      "table",
+      "bank",
+    ]);
     const id = text(b.id, 80);
     if (
       !/^[a-z0-9-]+$/.test(id) ||
@@ -144,6 +163,46 @@ export function parseDocument(value: unknown): QuestionDocument {
       };
     }
     let image: ContentBlock["image"];
+    let table: ContentBlock["table"], bank: ContentBlock["bank"];
+    if ([b.interaction, b.image, b.table, b.bank].filter(Boolean).length > 1)
+      throw Error("Conflicting block layouts");
+    if (b.table) {
+      const t = record(b.table);
+      exact(t, ["headers", "rows"]);
+      const rows = list(t.rows, 100).map((row) =>
+        list(row, 8).map((cell) => list(cell, 100).map(parseRun)),
+      );
+      const headers =
+        t.headers === undefined
+          ? undefined
+          : list(t.headers, 8).map((h) => text(h, 200));
+      const width = headers?.length ?? rows[0]?.length;
+      if (
+        b.kind !== "paragraph" ||
+        !width ||
+        !rows.length ||
+        rows.some((r) => r.length !== width)
+      )
+        throw Error("Invalid table columns");
+      table = { ...(headers ? { headers } : {}), rows };
+    }
+    if (b.bank) {
+      const k = record(b.bank);
+      exact(k, ["title", "options"]);
+      const options = list(k.options, 20).map((entry) => {
+        const o = record(entry);
+        exact(o, ["value", "label"]);
+        return { value: text(o.value, 10), label: text(o.label, 1000) };
+      });
+      if (
+        b.kind !== "paragraph" ||
+        !options.length ||
+        new Set(options.map((o) => o.value)).size !== options.length ||
+        options.some((o) => !/^[A-Z]$/.test(o.value))
+      )
+        throw Error("Invalid matching bank");
+      bank = { title: text(k.title, 200), options };
+    }
     if (b.image) {
       const img = record(b.image);
       exact(img, ["assetId", "alt"]);
@@ -157,18 +216,18 @@ export function parseDocument(value: unknown): QuestionDocument {
       depth: integer(b.depth, 0, 1) as 0 | 1,
       ...(interaction ? { interaction } : {}),
       ...(image ? { image } : {}),
-      runs: list(b.runs, 100).map((entry): ContentRun => {
-        const run = record(entry);
-        if (run.kind === "gap") {
-          exact(run, ["kind", "question"]);
-          return { kind: "gap", question: integer(run.question, 1, 40) };
-        }
-        return parseText(run);
-      }),
+      ...(table ? { table } : {}),
+      ...(bank ? { bank } : {}),
+      runs: list(b.runs, 100).map(parseRun),
     };
   });
   const gaps = blocks.flatMap((block) => [
     ...block.runs.flatMap((run) => (run.kind === "gap" ? [run.question] : [])),
+    ...(block.table?.rows.flatMap((row) =>
+      row.flatMap((cell) =>
+        cell.flatMap((run) => (run.kind === "gap" ? [run.question] : [])),
+      ),
+    ) ?? []),
     ...(block.interaction?.numbers ?? []),
   ]);
   if (
@@ -218,6 +277,25 @@ export function documentText(document: QuestionDocument): Map<string, string> {
       if (run.kind === "text") result.set(`${block.id}-${i}`, run.text);
     }),
   );
+  document.blocks.forEach((block) => {
+    block.table?.headers?.forEach((h, i) =>
+      result.set(`${block.id}-header-${i}`, h),
+    );
+    block.table?.rows.forEach((row, r) =>
+      row.forEach((cell, c) =>
+        cell.forEach((run, i) => {
+          if (run.kind === "text")
+            result.set(`${block.id}-r${r}-c${c}-${i}`, run.text);
+        }),
+      ),
+    );
+    if (block.bank) {
+      result.set(`${block.id}-bank-title`, block.bank.title);
+      block.bank.options.forEach((o) =>
+        result.set(`${block.id}-bank-${o.value}`, o.label),
+      );
+    }
+  });
   document.blocks.forEach((block) =>
     block.interaction?.options.forEach((option) =>
       result.set(`${block.id}-option-${option.value}`, option.label),

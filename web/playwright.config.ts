@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import {prepareIsolatedContent} from "./scripts/test-content.mjs";
 process.env.IELTS_E2E_DATA_ROOT ??= path.resolve(
   ".local/test-runs",
   `e2e-${randomUUID()}`,
@@ -19,12 +19,7 @@ if (
 )
   throw Error("E2E data must stay inside .local/test-runs");
 process.env.IELTS_CONTENT_ROOT = path.join(isolatedRoot, "private-content");
-if (!existsSync(process.env.IELTS_CONTENT_ROOT)) {
-  mkdirSync(isolatedRoot, { recursive: true });
-  cpSync(path.resolve("../private-content"), process.env.IELTS_CONTENT_ROOT, {
-    recursive: true,
-  });
-}
+prepareIsolatedContent(process.env.IELTS_CONTENT_ROOT);
 
 export default defineConfig({
   testDir: "./tests/e2e",

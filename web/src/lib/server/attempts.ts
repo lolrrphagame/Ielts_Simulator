@@ -8,6 +8,7 @@ import { loadQuestionDocument } from "./question-content";
 import { validateAnchors } from "../listening/content";
 import { isVerified } from "./conversion-store";
 import { localDataRoot } from "./local-data";
+import { validateListeningDocuments } from "../listening/validation";
 
 export class HttpError extends Error {
   constructor(
@@ -40,7 +41,9 @@ async function persist(attempt: Attempt) {
   await rename(temporary, file);
 }
 async function finish(attempt: Attempt, now: number): Promise<Attempt> {
+  if(attempt.testId==="19-2" && !(await isVerified("19-2-listening")))throw new HttpError(409,"Listening grading requires human source review and full-unit verification. Your Practice answers are retained.");
   const test = await loadTest(attempt.testId);
+  if(attempt.testId==="19-2")validateListeningDocuments(attempt.testId,(await Promise.all([1,2,3,4].map(n=>loadQuestionDocument(attempt.testId,n)))).map(d=>{if(!d)throw Error("Listening document unavailable");return d;}),await readKey(attempt.testId));
   return {
     ...attempt,
     status: "submitted",
@@ -122,6 +125,7 @@ export async function accessAttempt(
         "Exam Mode requires Verified content. Source or converted content may have changed.",
       );
     const now = options.now ?? Date.now();
+    if(options.submit && attempt.testId==="19-2" && !(await isVerified("19-2-listening")))throw new HttpError(409,"Listening grading is locked until human source review and valid unit certification.");
     // The server's deadline wins over late client snapshots and client clock changes.
     if (attempt.deadline !== null && now >= attempt.deadline) {
       attempt = await finish(attempt, now);

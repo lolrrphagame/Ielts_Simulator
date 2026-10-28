@@ -467,7 +467,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                 {test.audio.length === 1
                   ? "full-test audio"
                   : "four section recordings"}
-                . Read the original source pages beside your answer sheet.
+                . {test.interactive ? "Selectable questions with inline answers; original scans are optional." : "Read the original source pages beside your answer sheet."}
               </p>
               <p>
                 {selection.mode === "exam"
@@ -508,7 +508,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                   {answered} / 40 answered · {attempt.bookmarks.length}{" "}
                   bookmarked
                 </span>
-                {attempt.status === "active" && (
+                {attempt.status === "active" && test.gradingReady!==false && (
                   <button
                     className="primary-button"
                     disabled={locked}
@@ -517,7 +517,13 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                     Submit answers
                   </button>
                 )}
+                {attempt.status==="active" && attempt.mode==="practice" && test.id==="19-2" && <button className="secondary-button" disabled={locked} onClick={()=>{
+                  if(!window.confirm("Start a blank attempt? Your current attempt will be saved privately."))return;
+                  setBusy(true);
+                  void save().then(()=>start()).catch(failure=>setError(failure instanceof Error?failure.message:"Could not save the current attempt.")).finally(()=>setBusy(false));
+                }}>Start a new attempt</button>}
               </div>
+              {test.gradingReady===false && attempt.status==="active" && <p className="workspace-alert">Needs Review — Practice answers and annotations are saved. Exam Mode and grading require actual human source review and a valid full-unit certificate.</p>}
               {confirm && (
                 <section
                   role="alertdialog"
@@ -583,7 +589,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                   </button>
                 ))}
               </div>
-              {test.id === "19-1" ? (
+              {test.interactive ? (
                 <InteractivePart
                   key={`${attempt.id}-${section}`}
                   attempt={attempt}

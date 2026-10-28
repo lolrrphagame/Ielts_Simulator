@@ -16,6 +16,7 @@ import { validateCompleteReading } from "../study-content";
 import { validateReadingKey } from "../reading/grading";
 import { practiceReading } from "./practice-reading";
 import { privateContentRoot } from "./content-root";
+import { validateListeningDocuments } from "../listening/validation";
 
 export const convertedRoot = privateContentRoot();
 export const digest = (value: Buffer | string) =>
@@ -66,6 +67,10 @@ export async function isVerified(id: string) {
         digest(await readFile(await containedFile(file.path))) !== file.sha256
       )
         return false;
+    if(id === "19-2-listening") {
+      const required=await (await import("./listening-validation")).validateListeningApproval("19-2",cert.reviewer);
+      if(required.some(p=>!cert.files.some(f=>f.path===p)))return false;
+    }
     return true;
   } catch {
     return false;
@@ -174,7 +179,7 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
       path.join(convertedRoot, directory, "crops.json"),
     )) ?? [];
   const documents =
-    unit.skill === "listening" && testId === "19-1"
+    unit.skill === "listening" && ["19-1","19-2"].includes(testId)
       ? (
           await Promise.all(
             [1, 2, 3, 4].map((n) => loadQuestionDocument(testId, n)),
@@ -188,6 +193,15 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
         )
       : null;
   const reviewed = await reviewedStudy(directory);
+  let listeningReviewPages:ConversionDetail["listeningReviewPages"];
+  if(id==="19-2-listening") {
+    const review=await jsonFile<{pages:unknown[]}>(path.join(convertedRoot,directory,"source-review.json"));
+    if(review && Array.isArray(review.pages))listeningReviewPages=review.pages.map(value=>{
+      const row=value as {page:string;checks:string[];humanReviewed:boolean};
+      if(!unit.pages.includes(row.page) || !Array.isArray(row.checks) || row.checks.some(s=>typeof s!=="string" || s.length>2000) || typeof row.humanReviewed!=="boolean")throw Error("Invalid Listening review checklist");
+      return {page:row.page,checks:row.checks,humanReviewed:row.humanReviewed};
+    });
+  }
   const practice=await practiceReading(directory);
   const readingScoring =
     unit.skill === "reading"
@@ -198,6 +212,7 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
     pages,
     crops,
     documents,
+    ...(listeningReviewPages?{listeningReviewPages}:{}),
     ...(cards ? { cards } : {}),
     ...(reviewed ? { reviewed } : {}),
     ...(practice ? {practiceReading:practice} : {}),
@@ -212,7 +227,7 @@ export async function certify(id: string, reviewer: string) {
     /^page_\d+\.png$/.test(p),
   ))
     files.push(`private-assets/pdfs/${directory}/${page}`);
-  if (skill === "listening" && testId === "19-1") {
+  if (skill === "listening" && ["19-1","19-2"].includes(testId)) {
     const documents = await Promise.all(
       [1, 2, 3, 4].map((n) => loadQuestionDocument(testId, n)),
     );
@@ -225,11 +240,13 @@ export async function certify(id: string, reviewer: string) {
     const key = parseAnswerKey(
       JSON.parse(
         await readFile(
-          path.join(projectRoot, "answers/Cambridge19/T1_Listening.json"),
+          path.join(projectRoot, `answers/${directory}.json`),
           "utf8",
         ),
       ),
     );
+    validateListeningDocuments(testId,documents.map(d=>d!),key);
+    if(testId === "19-2")files.push(...await (await import("./listening-validation")).validateListeningApproval(testId,reviewer));
     for (const doc of documents)
       for (const block of doc!.blocks)
         if (block.interaction) {
@@ -247,8 +264,8 @@ export async function certify(id: string, reviewer: string) {
         }
     files.push(
       ...[1, 2, 3, 4].map((n) => `private-content/${directory}/part-${n}.json`),
-      `private-content/${directory}/media/farley-map.png`,
-      "answers/Cambridge19/T1_Listening.json",
+      ...(testId==="19-1"?[`private-content/${directory}/media/farley-map.png`]:[]),
+      `answers/${directory}.json`,
     );
   } else if (skill === "reading") {
     const reviewed = await reviewedStudy(directory);

@@ -462,7 +462,7 @@ function ReviewUnit({
             className="secondary-button"
             onClick={() => setShowJson(!showJson)}
           >
-            {showJson ? "Hide" : "View"} verified structured JSON
+            {showJson ? "Hide" : "View"} {detail.unit.status === "Verified" ? "verified" : "Needs Review"} structured JSON
           </button>
           {showJson && <pre>{JSON.stringify(detail.documents, null, 2)}</pre>}
           <Link
@@ -473,6 +473,10 @@ function ReviewUnit({
           </Link>
         </section>
       )}
+      {detail.listeningReviewPages && <section aria-label="Listening source review checklist">
+        <h2>Listening page-by-page source checklist</h2><p>OCR and assistant comparison do not count as human approval. Review every source page and question before certification.</p>
+        {detail.listeningReviewPages.map(row=><details key={row.page}><summary>{row.page} · {row.humanReviewed?"Human review recorded":"Needs human review"}</summary><ul>{row.checks.map((check,i)=><li key={i}>{check}</li>)}</ul></details>)}
+      </section>}
       {detail.crops.map((crop) => (
         <section key={crop.id}>
           <h2>Task 1 crop candidate — {crop.status}</h2>

@@ -1,3 +1,4 @@
+import { privateContentRoot } from "../../src/lib/server/content-root";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
@@ -8,13 +9,13 @@ test("T2 all 40 Practice slots: P3 actual controls, blank/new, autosave/resume, 
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const approved = JSON.parse(
     await readFile(
-      "../private-content/Cambridge19/T2_Reading/reviewed.json",
+      privateContentRoot() + "/Cambridge19/T2_Reading/reviewed.json",
       "utf8",
     ),
   );
   const draft = JSON.parse(
     await readFile(
-      "../private-content/Cambridge19/T2_Reading/practice-draft.json",
+      privateContentRoot() + "/Cambridge19/T2_Reading/practice-draft.json",
       "utf8",
     ),
   );

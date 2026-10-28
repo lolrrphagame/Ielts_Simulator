@@ -44,7 +44,7 @@ export function questionsFor(id: TestId): Question[] {
         kind: "multiple",
         options: ["A", "B", "C", "D", "E"],
         limit: 2,
-        page: id === "19-1" ? 12 : undefined,
+        page: id === "19-1" ? 12 : id === "19-2" ? 35 : undefined,
         instruction: "Choose two letters. Read the choices on the source page.",
       });
       n++;
@@ -78,6 +78,36 @@ export function questionsFor(id: TestId): Question[] {
               ? "One word and/or a number. Refer to the source notes."
               : "One word only. Refer to the source notes.",
         });
+    } else if (id === "19-2") {
+      const page =
+        n <= 6
+          ? 32
+          : n <= 10
+            ? 33
+            : n <= 16
+              ? 34
+              : n <= 20
+                ? 35
+                : n <= 24
+                  ? 36
+                  : n <= 30
+                    ? 37
+                    : 38;
+      if ((n >= 11 && n <= 16) || (n >= 21 && n <= 24) || (n >= 29 && n <= 30))
+        questions.push({
+          ...base,
+          page,
+          kind: "single",
+          options: ["A", "B", "C"],
+        });
+      else if (n >= 25 && n <= 28)
+        questions.push({
+          ...base,
+          page,
+          kind: "matching",
+          options: [..."ABCDEF"],
+        });
+      else questions.push({ ...base, page, kind: "text" });
     } else questions.push({ ...base, kind: "text" });
   }
   return questions;

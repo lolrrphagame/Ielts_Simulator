@@ -296,6 +296,13 @@ export function QuestionDocumentRenderer({
               )}
             </fieldset>,
           );
+        } else if(block.table) {
+          output.push(<div className="listening-table-scroll" key={block.id}><table className="listening-content-table">
+            {block.table.headers && <thead><tr>{block.table.headers.map((h,c)=><th key={c} scope="col">{marked(`${block.id}-header-${c}`,h)}</th>)}</tr></thead>}
+            <tbody>{block.table.rows.map((row,r)=><tr key={r}>{row.map((cell,c)=><td key={c}>{runs({...block,id:`${block.id}-r${r}-c${c}`,runs:cell})}</td>)}</tr>)}</tbody>
+          </table></div>);
+        } else if(block.bank) {
+          output.push(<section className="listening-bank" key={block.id}><h3>{marked(`${block.id}-bank-title`,block.bank.title)}</h3><dl className="listening-choice-bank">{block.bank.options.map(o=><div key={o.value}><dt>{o.value}</dt><dd>{marked(`${block.id}-bank-${o.value}`,o.label)}</dd></div>)}</dl></section>);
         } else if (block.image)
           output.push(
             <figure key={block.id}>

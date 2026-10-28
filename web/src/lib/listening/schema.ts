@@ -41,6 +41,8 @@ export type ListeningTest = {
   verification: "mapped" | "source-sheet";
   excluded: number[];
   examReady?: boolean;
+  interactive?: boolean;
+  gradingReady?: boolean;
 };
 export type Mark = {
   numbers: number[];

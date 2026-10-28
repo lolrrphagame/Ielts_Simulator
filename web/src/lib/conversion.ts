@@ -37,6 +37,7 @@ export type ConversionUnit = {
   issues: string[];
 };
 export type ConversionDetail = {
+  listeningReviewPages?: {page:string;checks:string[];humanReviewed:boolean}[];
   readingScoring?: { available: boolean; reason?: string };
   reviewed?: import("./study-content").ReviewedStudy;
   practiceReading?: import("./server/practice-reading").PracticeReading;

@@ -5,12 +5,13 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { localDataRoot } from "../src/lib/server/local-data";
+import {privateContentRoot} from "../src/lib/server/content-root";
 
 test("Reading certification transaction on isolated copied content: approval gates, rollback/recovery, scoring and immutable history", async () => {
   const root = path.join(localDataRoot(), "certification");
   const content = path.join(root, "private-content");
   await mkdir(root, { recursive: true });
-  await cp(path.resolve("../private-content"), content, { recursive: true });
+  await cp(privateContentRoot(), content, { recursive: true });
   const result = await promisify(execFile)(
     process.execPath,
     [

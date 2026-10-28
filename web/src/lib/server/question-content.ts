@@ -8,16 +8,17 @@ export async function loadQuestionDocument(
   testId: string,
   section: number,
 ): Promise<QuestionDocument | null> {
-  if (testId !== "19-1" || ![1, 2, 3, 4].includes(section)) return null;
+  if (!["19-1","19-2"].includes(testId) || ![1, 2, 3, 4].includes(section)) return null;
+  const testNumber=testId.split("-")[1];
   const file = await containedFile(
-    `private-content/Cambridge19/T1_Listening/part-${section}.json`,
+    `private-content/Cambridge19/T${testNumber}_Listening/part-${section}.json`,
   );
   const document = parseDocument(JSON.parse(await readFile(file, "utf8")));
   for (const source of document.sourcePages ?? [
     { page: document.sourcePage, sha256: document.sourceSha256 },
   ]) {
     const scan = await containedFile(
-      `private-assets/pdfs/Cambridge19/T1_Listening/page_${source.page}.png`,
+      `private-assets/pdfs/Cambridge19/T${testNumber}_Listening/page_${source.page}.png`,
     );
     const hash = createHash("sha256")
       .update(await readFile(scan))

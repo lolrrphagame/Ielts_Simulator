@@ -1,3 +1,4 @@
+import { privateContentRoot } from "../../src/lib/server/content-root";
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 const origin = "http://127.0.0.1:3100";
@@ -7,7 +8,7 @@ test("C19 T2: actual Passage 1 notes/TFNG, separate attempts, annotations/resume
 }) => {
   const content = JSON.parse(
     await readFile(
-      "../private-content/Cambridge19/T2_Reading/reviewed.json",
+      privateContentRoot() + "/Cambridge19/T2_Reading/reviewed.json",
       "utf8",
     ),
   );

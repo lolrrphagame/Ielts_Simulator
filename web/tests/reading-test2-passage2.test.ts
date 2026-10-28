@@ -1,3 +1,4 @@
+import { privateContentRoot } from "../src/lib/server/content-root";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -68,12 +69,12 @@ test("Practice loading preserves original P1 evidence and never confers full-tes
   assert.equal(detail.readingScoring?.available, false);
   const certificate = JSON.parse(
     await readFile(
-      "../private-content/Cambridge19/T2_Reading/reviewed-verification.json",
+      privateContentRoot() + "/Cambridge19/T2_Reading/reviewed-verification.json",
       "utf8",
     ),
   );
   const original = await readFile(
-    "../private-content/Cambridge19/T2_Reading/reviewed.json",
+    privateContentRoot() + "/Cambridge19/T2_Reading/reviewed.json",
   );
   assert.equal(
     certificate.files.find((f: { path: string }) =>
@@ -89,7 +90,7 @@ test("Practice loading preserves original P1 evidence and never confers full-tes
 test("Practice schema rejects approval claims and embedded answers", async () => {
   const raw = JSON.parse(
     await readFile(
-      "../private-content/Cambridge19/T2_Reading/practice-draft.json",
+      privateContentRoot() + "/Cambridge19/T2_Reading/practice-draft.json",
       "utf8",
     ),
   );

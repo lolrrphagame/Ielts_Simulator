@@ -119,7 +119,8 @@ export function loadTest(value: string): Promise<ListeningTest> {
           questions: questionsFor(id),
           durationSeconds:
             Math.ceil(audio.reduce((sum, a) => sum + a.duration, 0)) + 120,
-          verification: id === "19-1" ? "mapped" : "source-sheet",
+          verification: ["19-1","19-2"].includes(id) ? "mapped" : "source-sheet",
+          interactive:["19-1","19-2"].includes(id),
           excluded: excludedFor(id),
           examReady: await (
             await import("./conversion-store")
@@ -136,5 +137,9 @@ export function loadTest(value: string): Promise<ListeningTest> {
         throw error;
       }),
     );
-  return cache.get(id)!;
+  // Eligibility is checked fresh; media metadata alone is cached.
+  return cache.get(id)!.then(async cached=>{
+    const ready=await(await import("./conversion-store")).isVerified(`${id}-listening`);
+    return {...cached,examReady:ready,gradingReady:id==="19-2"?ready:true};
+  });
 }

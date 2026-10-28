@@ -22,6 +22,11 @@ export function AudioPlayer({
   const [playing, setPlaying] = useState(false);
   const item = test.audio[attempt.audioIndex];
   const active = attempt.status === "active" && !expired;
+  function savePracticePosition(audio:HTMLAudioElement) {
+    if(attempt.mode!=="practice" || !active || player.current!==audio)return;
+    savedTime.current=audio.currentTime;lastSaved.current=audio.currentTime;
+    onPosition(attempt.audioIndex,audio.currentTime);
+  }
   useEffect(() => {
     if (!active) player.current?.pause();
   }, [active]);
@@ -64,7 +69,8 @@ export function AudioPlayer({
           }
         }}
         onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
+        onPause={e => {setPlaying(false);savePracticePosition(e.currentTarget);}}
+        onSeeked={e=>savePracticePosition(e.currentTarget)}
         onError={() =>
           setMessage(
             "Audio could not be loaded. Check the local server and reload to renew access. Your saved answers are retained.",
