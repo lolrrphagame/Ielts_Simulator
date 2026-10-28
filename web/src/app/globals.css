@@ -331,3 +331,4 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .reading-phrase-bank > .reading-bank-row { display:grid;grid-template-columns:1.25rem minmax(0,1fr);column-gap:8px;align-items:start;min-width:0; }
 .reading-bank-row > dt { grid-column:1;grid-row:1;margin:0;font-weight:700; }
 .reading-bank-row > dd { grid-column:2;grid-row:1;margin:0;min-width:0;overflow-wrap:anywhere;word-break:normal; }
+.reading-summary .summary-paragraph-start::before { content:'';display:block;margin-top:14px; }

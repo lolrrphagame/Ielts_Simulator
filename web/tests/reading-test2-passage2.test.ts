@@ -21,7 +21,7 @@ test("T2 P2 practice draft covers 14-26 with real types, labels and opening-sent
   assert.equal(practice.humanReviewed, false);
   const p = practice.document.passages[0];
   assert.equal(p.id, "passage-2");
-  assert.equal(practice.document.sourcePages.length, 4);
+  assert.equal(p.sourcePages?.length, 4);
   assert.deepEqual(
     p.paragraphs.map((p) => p.label),
     [..."ABCDEF"],

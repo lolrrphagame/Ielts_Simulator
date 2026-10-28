@@ -567,7 +567,7 @@ function ReadingQuestions({
               .filter(Boolean);
             return (
               <div
-                className="reading-question"
+                className={`reading-question${q.paragraphStart ? " summary-paragraph-start" : ""}`}
                 key={q.number}
                 id={`reading-question-${q.number}`}
               >

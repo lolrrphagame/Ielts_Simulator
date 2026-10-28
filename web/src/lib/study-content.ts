@@ -6,6 +6,7 @@ export type ReadingQuestion = {
   numbers?: number[];
   choices?: { value: string; label: string }[];
   context?: { kind: "heading" | "bullet"; text: string }[];
+  paragraphStart?: boolean;
 };
 export type ReadingPassage = {
   id: string;
@@ -174,6 +175,7 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                 "numbers",
                 "choices",
                 "context",
+                "paragraphStart",
               ]);
               if (
                 !Number.isInteger(q.number) ||
@@ -183,6 +185,11 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
               )
                 throw Error("Invalid question coverage");
               numbers.add(Number(q.number));
+              if (
+                q.paragraphStart !== undefined &&
+                typeof q.paragraphStart !== "boolean"
+              )
+                throw Error("Invalid summary paragraph marker");
               let multiple: Pick<ReadingQuestion, "numbers" | "choices"> = {};
               if (q.numbers) {
                 const slots = list(q.numbers).map(Number);
@@ -227,6 +234,7 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                 after: text(q.after),
                 ...(q.options ? { options: list(q.options).map(text) } : {}),
                 ...multiple,
+                ...(q.paragraphStart ? { paragraphStart: true } : {}),
                 ...(q.context
                   ? {
                       context: list(q.context).map((entry) => {

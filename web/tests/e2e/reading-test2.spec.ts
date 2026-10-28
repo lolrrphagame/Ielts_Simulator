@@ -106,12 +106,12 @@ test("C19 T2: actual Passage 1 notes/TFNG, separate attempts, annotations/resume
     await page
       .getByRole("button", { name: new RegExp(`Passage ${n}`) })
       .click();
-    await expect(page.locator(".reading-passage")).toContainText(
-      "Needs Review",
+    await expect(page.locator(".practice-review-notice")).toContainText(
+      "awaiting human review",
     );
     await expect(
       page.locator(".reading-questions input, .reading-questions select"),
-    ).toHaveCount(0);
+    ).toHaveCount(23);
   }
   const endpoint = `/api/private/study/19-2-reading?mode=practice&attempt=${id}`;
   const saved = (await (await page.request.get(endpoint)).json()).data.draft;

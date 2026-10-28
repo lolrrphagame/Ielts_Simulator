@@ -1,5 +1,9 @@
 # Reusable Reading engine — Phase 5A
 
+Phase 5B.2: C19 Test 2 now has all three passages and 40 unique response positions available in Practice. Passage 3 uses private scans `page_47.png`–`page_50.png` and cached OCR: six A–K summary selectors (27–32), five YES/NO/NOT GIVEN selectors (33–37), and three single-choice A–D groups (38–40). The optional typed `paragraphStart` marker preserves a second summary paragraph without duplicating questions. Genuine phrase banks retain descriptions in a responsive grid; the Passage 2 A–F strip is unchanged.
+
+Passages 2 and 3 remain **Needs Review**, `humanReviewed: false`. Their content is appended in the ignored private Practice draft, with separate assistant-comparison notes. Full structural/key compatibility checks do not confer source approval. The original Passage 1 document and evidence are unchanged; no full-unit certificate has been issued. Exam and server submission remain blocked. See [Phase 5B.2 QA and manual-review checklist](../../QA_PHASE_5B_2.md).
+
 Phase 5B.1: T2 Passage 2 is now available as **Needs Review Practice content**, not human-approved content. It is loaded from a separate `practice-draft.json`; the original Passage 1 document/evidence remain byte-for-byte unchanged. `practiceReading` validates the typed content and source hashes but never confers verification. The workspace merges missing draft passages only for display, labels their pending status, and preserves per-passage column scroll during switching. The grader/certifier still uses only reviewed content and full-unit evidence. See [Phase 5B.1 QA](../../QA_PHASE_5B_1.md).
 
 Reading grading now resolves the validated catalog unit (`19/20/21`, tests `1–4`) through `unitParts`, instead of accepting only `19-1-reading`. The key path is derived on the server from that unit. There is no client-selected filename or client-side answer-key import.
@@ -40,4 +44,4 @@ Start a new Practice attempt at `/exam/19/2/reading/practice`. The source scan i
 - E2E covers the seven real inline gaps, six statement selectors, notes/headings, paragraph text, highlights/notes, reload, resume/new attempt, pending passage tabs, private scan access, API submission rejection and unit-ID isolation.
 - Test runners continue to use fresh `.local/test-runs/` data. Production attempts, historical results and original copyrighted sources are unchanged.
 
-The generic adapter is ready for additional fully reviewed units. A second complete real Reading exam has not been graded in this phase because T2 Passages 2–3 have not been converted/reviewed; these are intentionally not substituted with invented fixtures.
+The generic adapter is ready for additional fully reviewed units. Test 2 now has complete Practice mappings, but Passages 2–3 still await human review. No official Test 2 result is generated or persisted. Pure-engine unit checks use the actual private mappings/key to validate compatibility while server submission and Exam eligibility remain independently blocked.

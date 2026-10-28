@@ -157,10 +157,12 @@ test("T2 P2 practice: matching/completion/choose-two, pending review, scroll/ans
   );
   await expect(page.locator(".optional-scan a")).toHaveCount(4);
   await page.getByRole("button", { name: /^Passage 3/ }).click();
-  await expect(page.locator(".reading-passage")).toContainText("Needs Review");
+  await expect(page.locator(".practice-review-notice")).toContainText(
+    "awaiting human review",
+  );
   await expect(
     page.locator(".reading-questions input, .reading-questions select"),
-  ).toHaveCount(0);
+  ).toHaveCount(23);
   await expect(page.locator(".study-status")).toContainText(
     "Saved on this device",
   );
