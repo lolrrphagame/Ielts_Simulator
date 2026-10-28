@@ -689,6 +689,11 @@ function ReadingQuestions({
                     </p>
                     <select
                       aria-label={`Answer for question ${q.number}`}
+                      className={
+                        g.bankKind === "paragraphs"
+                          ? "paragraph-answer-select"
+                          : undefined
+                      }
                       value={responses[q.number] ?? ""}
                       onChange={(e) =>
                         onResponses({ [q.number]: e.target.value })
@@ -697,9 +702,7 @@ function ReadingQuestions({
                       <option value="">Choose an answer</option>
                       {q.options.map((o) => (
                         <option key={o} value={o}>
-                          {g.bankKind === "paragraphs"
-                            ? `${o} — Paragraph ${o}`
-                            : o}
+                          {o}
                         </option>
                       ))}
                     </select>
@@ -742,25 +745,17 @@ function ReadingBank({
   mark: (id: string, text: string) => ReactNode;
 }) {
   if (!g.bank) return null;
+  if (g.bankKind === "paragraphs")
+    return (
+      <ul className="paragraph-choice-strip" aria-label="Paragraph choices">
+        {g.bank.map((choice) => (
+          <li key={choice.value}>{choice.value}</li>
+        ))}
+      </ul>
+    );
   return (
     <div>
-      {g.bankKind === "paragraphs" && (
-        <p className="matching-bank-caption">
-          Paragraph references — opening sentences from the source
-        </p>
-      )}
-      <dl
-        className={
-          g.bankKind === "paragraphs"
-            ? "reading-paragraph-bank"
-            : "reading-phrase-bank"
-        }
-        aria-label={
-          g.bankKind === "paragraphs"
-            ? "Paragraph matching bank"
-            : "Phrase choices"
-        }
-      >
+      <dl className="reading-phrase-bank" aria-label="Phrase choices">
         {g.bank.map((choice) => (
           <div key={choice.value} className="reading-bank-row">
             <dt>{choice.value}</dt>

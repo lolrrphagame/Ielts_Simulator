@@ -49,18 +49,18 @@ test("T2 P2 practice: matching/completion/choose-two, pending review, scroll/ans
     await expect(page.locator(`[data-text-id="${paragraph.id}"]`)).toHaveText(
       paragraph.text,
     );
-  await expect(page.locator(".reading-paragraph-bank dt")).toHaveText([
+  await expect(page.locator(".paragraph-choice-strip li")).toHaveText([
     ..."ABCDEF",
   ]);
-  await expect(page.locator(".reading-paragraph-bank dd")).toHaveText(
-    p.groups[0].bank.map((v: { label: string }) => v.label),
-  );
+  await expect(
+    page.locator(".reading-paragraph-bank, .matching-bank-caption"),
+  ).toHaveCount(0);
   await expect(page.locator(".optional-scan")).toHaveCount(0);
   for (let n = 14; n <= 18; n++) {
     const field = page.getByLabel(`Answer for question ${n}`, { exact: true });
     await expect(field.locator("option")).toHaveText([
       "Choose an answer",
-      ...[..."ABCDEF"].map((l) => `${l} — Paragraph ${l}`),
+      ..."ABCDEF",
     ]);
     await field.selectOption(key[n][0].toUpperCase());
   }

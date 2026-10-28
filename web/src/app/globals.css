@@ -324,9 +324,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .reading-static-note::before, .reading-notes .reading-question > p:not(.reading-static-note)::before { content:'•';position:absolute;left:0; }
 .practice-review-notice { padding:14px 18px;border:1px solid #d8bb77;background:#fffaeb;border-radius:7px;margin:14px 0;font-size:13px;line-height:1.7; }
 .practice-review-notice p { margin:6px 0; }.practice-review-notice li { list-style:disc;margin:6px 0 6px 20px; }
-.reading-paragraph-bank { display:grid;grid-template-columns:minmax(0,1fr);row-gap:8px;border:1px solid #b8cadf;padding:14px;border-radius:6px;margin:10px 0 18px;font-size:13px;line-height:1.6; }
-.reading-paragraph-bank > .reading-bank-row, .reading-phrase-bank > .reading-bank-row { display:grid;grid-template-columns:1.25rem minmax(0,1fr);column-gap:8px;align-items:start;min-width:0; }
+.paragraph-choice-strip { display:flex;flex-wrap:wrap;gap:8px;align-items:center;list-style:none;padding:0;margin:12px 0 16px; }
+.paragraph-choice-strip > li { flex:0 0 32px;display:flex;align-items:center;justify-content:center;height:30px;border:1px solid #b8cadf;border-radius:5px;background:#f3f7fc;font-size:13px;font-weight:700; }
+.study-tabs[aria-label="Reading passages"] { flex-wrap:wrap; }
+.reading-questions .paragraph-answer-select { width:90px;max-width:100%; }
+.reading-phrase-bank > .reading-bank-row { display:grid;grid-template-columns:1.25rem minmax(0,1fr);column-gap:8px;align-items:start;min-width:0; }
 .reading-bank-row > dt { grid-column:1;grid-row:1;margin:0;font-weight:700; }
 .reading-bank-row > dd { grid-column:2;grid-row:1;margin:0;min-width:0;overflow-wrap:anywhere;word-break:normal; }
-.matching-bank-caption { font-size:12px;color:#526780;margin-top:12px; }
-@media (max-width:650px) { .reading-paragraph-bank { grid-template-columns:minmax(0,1fr); } }
