@@ -13,6 +13,7 @@ import { containedFile } from "./assets";
 import { studyDraft } from "./study-drafts";
 import { isVerified } from "./conversion-store";
 import { createReadingAttempt, listReadingAttempts } from "./reading-attempts";
+import { loadReadingCandidate } from "./reading-candidate";
 
 const privateHeaders = {
   "Cache-Control": "private, no-store, max-age=0",
@@ -154,6 +155,13 @@ export async function privateApi(request: Request, segments: string[]) {
     );
   try {
     const [resource, id, action, assetId] = segments;
+    if (resource === "reading-candidate" && segments.length === 2 && request.method === "GET") {
+      try {
+        return Response.json({data:await loadReadingCandidate(id)}, {headers:privateHeaders});
+      } catch {
+        throw new HttpError(409,"Review candidate is missing, stale or invalid. Prepare it again before review.");
+      }
+    }
     if (
       resource === "converted" &&
       segments.length === 4 &&

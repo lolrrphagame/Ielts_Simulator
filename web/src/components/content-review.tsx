@@ -8,6 +8,7 @@ import type { StudyDraft } from "@/lib/server/study-drafts";
 import { selectedAnchors } from "./listening/text-selection";
 import { StudyWorkspace } from "./study-workspace";
 import { ReadingAttemptPicker } from "./reading-attempt-picker";
+import { ReadingCandidateReview } from "./reading-candidate-review";
 
 export function ContentReview({
   initialUnit = "19-1-listening",
@@ -132,6 +133,7 @@ function ReviewUnit({
   const [edit, setEdit] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [showJson, setShowJson] = useState(false);
+  const [candidateView, setCandidateView] = useState(false);
   const [selected, setSelected] = useState<TextAnchor[]>([]);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
     null,
@@ -299,6 +301,8 @@ function ReviewUnit({
         onSubmit={detail.readingScoring?.available && attempt ? submitReading : undefined}
       />
     );
+  if (candidateView)
+    return <ReadingCandidateReview unit={id} draft={draft} onChange={change} status={status} error={error} onBack={()=>setCandidateView(false)} />;
   const page = detail.pages[pageIndex];
   const contentId = `${id}-${page.name}-${page.ocr?.sourceSha256.slice(0, 12) ?? "source"}`;
   const annotations = draft.annotations.filter(
@@ -356,6 +360,9 @@ function ReviewUnit({
   return (
     <>
       <div className="review-status">
+        {detail.unit.skill === "reading" && (
+          <button className="secondary-button" onClick={()=>setCandidateView(true)}>Review interactive candidate</button>
+        )}
         <strong>{detail.unit.status}</strong>
         <span>
           {detail.unit.convertedPages}/{detail.unit.pages.length} pages OCR ·{" "}

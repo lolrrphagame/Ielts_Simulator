@@ -523,7 +523,7 @@ export function StudyWorkspace({
   );
 }
 
-function ReadingQuestions({
+export function ReadingQuestions({
   passage,
   mark,
   responses,

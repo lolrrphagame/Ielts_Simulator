@@ -12,6 +12,7 @@
     "audit:assets": "tsx scripts/audit-assets.ts",
     "content:inventory": "tsx scripts/convert-content.ts inventory",
     "content:quality": "tsx scripts/convert-content.ts quality",
+    "content:reading-candidate": "tsx scripts/prepare-reading-candidate.ts",
     "content:batch": "tsx scripts/convert-content.ts batch",
     "content:verify": "tsx scripts/convert-content.ts verify",
     "content:report": "tsx scripts/convert-content.ts report"

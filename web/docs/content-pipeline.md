@@ -17,6 +17,8 @@ All generated text, cards, crops and verification records live under **`private-
 
 ## Review and verification
 
+C19 T2 Reading preparation: `npm run content:reading-candidate -- --unit 19-2-reading` merges the existing reviewed passage and private Practice draft into an independent `review-candidate.json`. It checks all original pages/hashes, input freshness, 40 mappings and private-key compatibility. A private `review-checklist.json` supplies page/group review tasks. The candidate remains Needs Review and never replaces existing evidence. In `/review`, select `19-2-reading` and **Review interactive candidate** for original scans beside reusable interactive HTML. Sandbox responses/annotations are saved under review mode, separate from Practice attempts. Human approval must explicitly cover every source element and the current candidate hash before any promotion or `content:verify`. Exact staged instructions: [Phase 5B.3 QA](../../QA_PHASE_5B_3.md).
+
 1. Start `npm run dev` or `npm start` after building; open `http://127.0.0.1:3000/review`.
 2. Select a unit/page. Compare selectable OCR text against the original. Inspect confidence and bounding boxes through line tooltips. Personal notes and selection annotations persist on this device; they do not change verification status.
 3. Manually correct/map content into the `QuestionDocument` schema in `src/lib/listening/content.ts`. Use text/gap runs at the source positions, actual choice labels, grouped multiple choices, matching options and source-derived image references. Do not put answer keys in these documents. The renderer supports these primitives; additional task layouts need explicit adapters.

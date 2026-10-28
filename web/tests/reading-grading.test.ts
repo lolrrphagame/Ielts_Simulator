@@ -226,7 +226,19 @@ test("Concurrent submits keep one immutable result; stale final payloads cannot 
     studyDraft(unit, mode, { ...saved, responses: {} }, a.id, true),
   ]);
   assert.deepEqual(results[0], results[1]);
-  assert.equal(results[0].submission?.result.score, 1);
+  // Both calls perform asynchronous attempt-scope validation before locking.
+  // Either valid payload can acquire the lock first; both must return that
+  // same immutable snapshot, with a score matching the actual saved answers.
+  const winner = results[0];
+  assert.ok(
+    JSON.stringify(winner.responses) === JSON.stringify(saved.responses) ||
+      JSON.stringify(winner.responses) === "{}",
+  );
+  assert.equal(
+    winner.submission?.result.score,
+    winner.responses[1] === responses[1] ? 1 : 0,
+  );
+  assert.deepEqual(await studyDraft(unit, mode, undefined, a.id), winner);
   const b = await createReadingAttempt(unit, mode),
     blank = await studyDraft(unit, mode, undefined, b.id);
   assert.equal(
