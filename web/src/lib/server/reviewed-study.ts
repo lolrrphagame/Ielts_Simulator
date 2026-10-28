@@ -38,7 +38,8 @@ export async function reviewedStudy(
           (f) => `private-content/${directory}/media/${f}`,
         ),
       );
-    for (const file of required) {
+    if(certificate.approval && !certificate.files.some((f:{path:string})=>f.path===certificate.approval))return null;
+    for (const file of new Set([...required,...certificate.files.map((f:{path:string})=>f.path)])) {
       const hash = createHash("sha256")
         .update(await readFile(await containedFile(file)))
         .digest("hex");

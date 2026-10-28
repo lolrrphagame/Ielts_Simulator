@@ -1,6 +1,7 @@
 import { readFile, readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 import { parseFile } from "music-metadata";
+import { privateContentRoot } from "./content-root";
 import { excludedFor, questionsFor } from "../listening/structure";
 import {
   parseAnswerKey,
@@ -14,7 +15,9 @@ import {
 export const projectRoot = path.resolve(process.cwd(), "..");
 export async function containedFile(relative: string): Promise<string> {
   const root = await realpath(projectRoot);
-  const file = await realpath(path.join(root, relative));
+  const file = await realpath(relative.startsWith("private-content/")
+    ? path.join(privateContentRoot(), relative.slice("private-content/".length))
+    : path.join(root, relative));
   const resolved = path.relative(root, file);
   if (resolved.startsWith("..") || path.isAbsolute(resolved))
     throw new Error("Asset outside repository");

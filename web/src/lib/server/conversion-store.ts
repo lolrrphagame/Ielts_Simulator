@@ -15,8 +15,9 @@ import { reviewedStudy } from "./reviewed-study";
 import { validateCompleteReading } from "../study-content";
 import { validateReadingKey } from "../reading/grading";
 import { practiceReading } from "./practice-reading";
+import { privateContentRoot } from "./content-root";
 
-export const convertedRoot = path.join(projectRoot, "private-content");
+export const convertedRoot = privateContentRoot();
 export const digest = (value: Buffer | string) =>
   createHash("sha256").update(value).digest("hex");
 export function unitParts(id: string) {
@@ -48,6 +49,8 @@ export type Certificate = {
 export async function isVerified(id: string) {
   const { directory } = unitParts(id);
   try {
+    const transaction = await jsonFile<{status:string}>(path.join(convertedRoot,directory,"certification-transaction.json"));
+    if(transaction && !["committed","rolled-back"].includes(transaction.status))return false;
     const cert = await jsonFile<Certificate>(
       path.join(convertedRoot, directory, "verification.json"),
     );
@@ -270,6 +273,11 @@ export async function certify(id: string, reviewer: string) {
       `private-content/${directory}/reviewed-verification.json`,
       keyPath,
     );
+    const candidate = await jsonFile(path.join(convertedRoot,directory,"review-candidate.json"));
+    if(candidate) {
+      const approvalFiles = await (await import("./reading-review")).validateReadingApproval(id,reviewer);
+      files.push(...approvalFiles);
+    }
   } else if (skill === "writing") {
     const reviewed = await reviewedStudy(directory);
     if (reviewed?.kind !== "writing")

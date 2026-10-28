@@ -1,5 +1,7 @@
 # Reading scoring and results — Phase 4C
 
+Phase 5B.4 connects a genuine 12-page review/explicit approval transaction to the existing scoring availability for C19 T2. A valid committed certificate automatically enables the existing Submit Reading/results/history flow; no new grading algorithm or copied answers are introduced. The real dataset remains unapproved and locked. End-to-end certification/scoring tests run against private converted-content copies selected through server-only `IELTS_CONTENT_ROOT` under `.local/test-runs/`, with separate attempt storage. Existing submitted results remain immutable. See [Phase 5B.4 QA](../../QA_PHASE_5B_4.md).
+
 Phase 5B.3: C19 T2 now has a separate full-test private review candidate and source-backed pure preflight tests (blank/full/mixed, alternatives, normalization, reversed/partial/duplicate answer groups). This proves engine/key compatibility, not source approval. Its 40 Practice positions remain available, but live grading and Exam are blocked pending explicit human approval and legitimate full-unit evidence. Old T1 scores are not recomputed or migrated. See [the review gate](../../QA_PHASE_5B_3.md).
 
 Phase 5A update: the adapter now resolves any supported Reading unit dynamically and requires verified full content plus a valid private key. C19 T1 is still the complete, scoring-ready real exam; C19 T2 currently has only reviewed Passage 1, so full submission stays locked. See [reusable engine](reusable-reading-engine.md). No AI grading. Source assets and answer keys are read-only and private.

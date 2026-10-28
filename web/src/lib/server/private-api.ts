@@ -14,6 +14,7 @@ import { studyDraft } from "./study-drafts";
 import { isVerified } from "./conversion-store";
 import { createReadingAttempt, listReadingAttempts } from "./reading-attempts";
 import { loadReadingCandidate } from "./reading-candidate";
+import { readingReviewState,saveReadingPageReview,certifyReadingReview,recoverReadingCertification } from "./reading-review";
 
 const privateHeaders = {
   "Cache-Control": "private, no-store, max-age=0",
@@ -155,6 +156,12 @@ export async function privateApi(request: Request, segments: string[]) {
     );
   try {
     const [resource, id, action, assetId] = segments;
+    if(resource === "reading-review" && segments.length===2 && ["GET","PUT"].includes(request.method)) {
+      return Response.json({data:request.method==="GET" ? await readingReviewState(id) : await saveReadingPageReview(id,await jsonBody(request))},{headers:privateHeaders});
+    }
+    if(resource === "reading-review" && segments.length===3 && request.method==="POST" && ["certify","recover"].includes(action)) {
+      return Response.json({data:action==="certify" ? await certifyReadingReview(id,await jsonBody(request)) : await recoverReadingCertification(id)},{headers:privateHeaders});
+    }
     if (resource === "reading-candidate" && segments.length === 2 && request.method === "GET") {
       try {
         return Response.json({data:await loadReadingCandidate(id)}, {headers:privateHeaders});
