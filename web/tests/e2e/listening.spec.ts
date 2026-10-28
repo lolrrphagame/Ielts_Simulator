@@ -19,7 +19,7 @@ test("Cambridge 19 T1: real audio, questions, bookmarks, autosave/resume, submis
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/exam/19/1/listening/practice");
-  await page.getByRole("button", { name: "Begin Listening" }).click();
+  await page.getByRole("button", { name: "Start New Attempt" }).click();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),
   ).toBeVisible();
@@ -197,7 +197,7 @@ test("exam reload keeps deadline; timeout submits saved answers and locks editin
   page,
 }) => {
   await page.goto("/exam/19/1/listening/exam");
-  await page.getByRole("button", { name: "Begin Listening" }).click();
+  await page.getByRole("button", { name: "Start New Attempt" }).click();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),
   ).toBeVisible();
@@ -239,7 +239,7 @@ test("mobile workspace fits viewport and supports navigation", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/exam/21/1/listening/practice");
-  await page.getByRole("button", { name: "Begin Listening" }).click();
+  await page.getByRole("button", { name: "Start New Attempt" }).click();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),
   ).toBeVisible();
@@ -267,7 +267,7 @@ test("offline edits survive reload and sync after reconnection", async ({
   context,
 }) => {
   await page.goto("/exam/19/1/listening/practice");
-  await page.getByRole("button", { name: "Begin Listening" }).click();
+  await page.getByRole("button", { name: "Start New Attempt" }).click();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),
   ).toBeVisible();
@@ -300,7 +300,7 @@ for (const volume of ["20", "21"])
     page,
   }) => {
     await page.goto(`/exam/${volume}/1/listening/practice`);
-    await page.getByRole("button", { name: "Begin Listening" }).click();
+    await page.getByRole("button", { name: "Start New Attempt" }).click();
     await expect(
       page.getByLabel("Answer for question 1", { exact: true }),
     ).toBeVisible();

@@ -164,7 +164,8 @@ test("C19 T2 Listening Practice: blank attempts, saved table/annotation/audio, n
   );
   assert.ok(test.audio.every((a) => a.mime === "audio/mpeg" && a.duration > 0));
   const a = await createAttempt("19-2", "practice");
-  assert.deepEqual(a.responses, {});
+  assert.equal(Object.keys(a.responses).length,40);
+  assert.ok(Object.values(a.responses).every(v=>v===""));
   const textId = [...documentText(docs[0]).keys()].find((k) =>
     k.startsWith("p1-form-r0-c1"),
   )!;
@@ -200,5 +201,5 @@ test("C19 T2 Listening Practice: blank attempts, saved table/annotation/audio, n
     /human source approval/,
   );
   assert.equal(await isVerified("19-2-listening"), false);
-  assert.deepEqual((await createAttempt("19-2", "practice")).responses, {});
+  assert.ok(Object.values((await createAttempt("19-2", "practice")).responses).every(v=>v===""));
 });

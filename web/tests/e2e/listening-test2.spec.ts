@@ -35,7 +35,7 @@ test("C19 T2 Listening: four native parts, real audio, all 40 answers, annotatio
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/exam/19/2/listening/practice");
   await page
-    .getByRole("button", { name: "Begin Listening", exact: true })
+    .getByRole("button", { name: "Start New Attempt", exact: true })
     .click();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),
@@ -276,10 +276,8 @@ test("C19 T2 Listening: four native parts, real audio, all 40 answers, annotatio
       })
     ).status(),
   ).toBe(403);
-  page.once("dialog", (dialog) => dialog.accept());
-  await page
-    .getByRole("button", { name: "Start a new attempt", exact: true })
-    .click();
+  await page.getByRole("button",{name:"Choose Attempt",exact:true}).click();
+  await page.getByRole("button",{name:"Start New Attempt",exact:true}).click();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),
   ).toHaveValue("");
@@ -288,10 +286,9 @@ test("C19 T2 Listening: four native parts, real audio, all 40 answers, annotatio
       JSON.parse(localStorage.getItem("ielts:attempt:v1:19-2:practice")!).id,
   );
   expect(newId).not.toBe(id);
-  expect(
-    (await (await page.request.get(`/api/private/attempts/${newId}`)).json())
-      .data.responses,
-  ).toEqual({});
+  const blank=(await (await page.request.get(`/api/private/attempts/${newId}`)).json()).data.responses;
+  expect(Object.keys(blank)).toHaveLength(40);
+  expect(Object.values(blank).every(v=>v==="")).toBe(true);
   expect(
     (await (await page.request.get(endpoint)).json()).data.responses,
   ).toEqual(expected);

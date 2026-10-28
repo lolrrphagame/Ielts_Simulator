@@ -10,7 +10,13 @@ import {
   type ListeningTest,
   type Responses,
 } from "@/lib/listening/schema";
-import { AudioPlayer } from "./audio-player";
+import { AudioPlayer, type AudioPlayerHandle } from "./audio-player";
+import { ListeningAttemptPicker } from "./attempt-picker";
+import {
+  audioForQuestion,
+  questionForRecording,
+  hasPartRecordings,
+} from "@/lib/listening/audio-sync";
 import { QuestionInput } from "./question-input";
 import { InteractivePart } from "./interactive-part";
 
@@ -51,6 +57,12 @@ function snapshot(attempt: Attempt) {
     annotations: annotations ?? [],
   };
 }
+function selectedUrl(id: string | null) {
+  const url = new URL(window.location.href);
+  if (id) url.searchParams.set("attempt", id);
+  else url.searchParams.delete("attempt");
+  window.history.replaceState(null, "", url);
+}
 
 export function ListeningWorkspace({ selection }: { selection: Selection }) {
   const testId = `${selection.volume}-${selection.test}`;
@@ -76,13 +88,43 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
   const timeoutRetryAt = useRef(0);
   const conflict = useRef(false);
   const [hasConflict, setHasConflict] = useState(false);
+  const [showPicker, setShowPicker] = useState(true);
+  const switching = useRef(false),
+    actionBusy = useRef(false);
+  const audioControl = useRef<AudioPlayerHandle>(null);
+  const [retainedDraft, setRetainedDraft] = useState<string | null>(null);
   const synchronizeClock = useCallback((serverNow: number) => {
     clock.current = { server: serverNow, tick: performance.now() };
   }, []);
   const persistLocal = useCallback(
     (value: Attempt) => {
       try {
+        const previousRaw = localStorage.getItem(storageKey);
+        if (previousRaw) {
+          try {
+            const previous = JSON.parse(previousRaw) as Attempt;
+            if (
+              previous.version === 1 &&
+              previous.testId === value.testId &&
+              previous.mode === value.mode &&
+              typeof previous.id === "string" &&
+              previous.id !== value.id &&
+              !localStorage.getItem(`${storageKey}:${previous.id}`)
+            )
+              localStorage.setItem(`${storageKey}:${previous.id}`, previousRaw);
+          } catch {
+            /* Keep malformed legacy data instead of silently replacing it. */
+            localStorage.setItem(
+              `${storageKey}:unparsed:${Date.now()}`,
+              previousRaw,
+            );
+          }
+        }
         localStorage.setItem(storageKey, JSON.stringify(value));
+        localStorage.setItem(
+          `${storageKey}:${value.id}`,
+          JSON.stringify(value),
+        );
       } catch {
         setStorageError(
           "Browser storage is unavailable. Keep this tab open; server autosave remains available.",
@@ -100,83 +142,129 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
     [persistLocal],
   );
 
+  const activate = useCallback(
+    (response: Envelope<Attempt>) => {
+      const server = response.data;
+      if (server.testId !== testId || server.mode !== selection.mode)
+        throw Error("Listening attempt does not match this test and mode.");
+      let value = server,
+        recovered = false,
+        retained: string | null = null;
+      let raw: string | null = null;
+      try {
+        raw =
+          localStorage.getItem(`${storageKey}:${server.id}`) ??
+          localStorage.getItem(storageKey);
+        if (raw && server.status === "active") {
+          const cached = JSON.parse(raw) as Attempt;
+          if (
+            cached.version === 1 &&
+            cached.id === server.id &&
+            cached.testId === server.testId &&
+            cached.mode === server.mode &&
+            cached.status === "active"
+          ) {
+            const update = parseUpdate(cached);
+            if (update.revision === server.revision) {
+              value = { ...server, ...update };
+              recovered = true;
+            } else {
+              const local = { ...snapshot(cached), revision: 0 },
+                remote = { ...snapshot(server), revision: 0 };
+              if (JSON.stringify(local) !== JSON.stringify(remote)) {
+                retained = raw;
+                localStorage.setItem(
+                  `${storageKey}:${server.id}:conflict:${Date.now()}`,
+                  raw,
+                );
+              }
+            }
+          }
+        }
+      } catch {
+        if (raw) {
+          retained = raw;
+          try {
+            localStorage.setItem(
+              `${storageKey}:${server.id}:conflict:${Date.now()}`,
+              raw,
+            );
+          } catch {
+            /* In-memory download remains available if storage is full. */
+          }
+        }
+        setStorageError(
+          "Browser recovery data could not be merged. The server attempt is retained; download any retained browser draft before reloading.",
+        );
+      }
+      synchronizeClock(response.serverNow);
+      sequence.current = 0;
+      dirty.current = recovered;
+      conflict.current = !!retained;
+      switching.current = false;
+      setHasConflict(!!retained);
+      setRetainedDraft(retained);
+      setError(
+        retained
+          ? "The browser draft could not be merged with the saved server version. It has been retained for download; reload to use the saved server version."
+          : "",
+      );
+      setRemaining(
+        server.deadline
+          ? Math.max(
+              0,
+              Math.ceil((server.deadline - response.serverNow) / 1000),
+            )
+          : null,
+      );
+      timeoutRetryAt.current = 0;
+      setConfirm(false);
+      setPageNumber(null);
+      setImageError(false);
+      adopt(value);
+      selectedUrl(value.id);
+      setShowPicker(false);
+      setSaveStatus("Session restored");
+      if (recovered) setEdit((n) => n + 1);
+    },
+    [testId, selection.mode, storageKey, synchronizeClock, adopt],
+  );
+
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    void (async () => {
       try {
         const auth = await fetch("/api/local-session", { method: "POST" });
         if (!auth.ok)
-          throw new Error(
-            "Local access is unavailable. Start this application with npm run dev or npm start, then open http://127.0.0.1:3000.",
-          );
+          throw Error("Open this application using the local server.");
         const definition = await request<ListeningTest>(
           `/api/private/tests/${testId}`,
         );
         if (cancelled) return;
         setTest(definition.data);
         synchronizeClock(definition.serverNow);
-        let saved: string | null = null;
-        try {
-          saved = localStorage.getItem(storageKey);
-        } catch {
-          setStorageError(
-            "Browser storage is unavailable. Automatic resume after closing this tab is unavailable.",
-          );
-        }
-        if (saved) {
-          let draft: Attempt;
-          try {
-            draft = JSON.parse(saved);
-            if (
-              draft.version !== 1 ||
-              draft.testId !== testId ||
-              draft.mode !== selection.mode ||
-              typeof draft.id !== "string"
-            )
-              throw new Error();
-            parseUpdate(draft);
-          } catch {
-            setStorageError(
-              "The saved browser draft is invalid. Start a new session to replace it.",
-            );
-            return;
-          }
+        const id = new URL(window.location.href).searchParams.get("attempt");
+        if (id) {
           const resumed = await request<Attempt>(
-            `/api/private/attempts/${draft.id}`,
+            `/api/private/listening-attempts/${testId}/${encodeURIComponent(id)}?mode=${selection.mode}`,
           );
-          if (cancelled) return;
-          if (
-            resumed.data.testId !== testId ||
-            resumed.data.mode !== selection.mode
-          )
-            throw new Error("Saved session does not match this test.");
-          synchronizeClock(resumed.serverNow);
-          if (
-            resumed.data.status === "active" &&
-            draft.revision === resumed.data.revision
-          ) {
-            adopt({ ...resumed.data, ...parseUpdate(draft) });
-            dirty.current = true;
-            setEdit((n) => n + 1);
-          } else adopt(resumed.data);
-          setSaveStatus("Session restored");
+          if (!cancelled) activate(resumed);
         }
       } catch (failure) {
         if (!cancelled)
           setError(
             failure instanceof Error
               ? failure.message
-              : "Could not load the local test.",
+              : "Could not load Listening attempts.",
           );
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-    void load();
+    })();
     return () => {
       cancelled = true;
     };
-  }, [testId, selection.mode, storageKey, adopt, synchronizeClock]);
+  }, [testId, selection.mode, activate, synchronizeClock]);
 
   const save = useCallback(
     (submit = false) => {
@@ -193,7 +281,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
         setSaveStatus(submit ? "Submitting…" : "Saving…");
         try {
           const response = await request<Attempt>(
-            `/api/private/attempts/${value.id}${submit ? "/submit" : ""}`,
+            `/api/private/listening-attempts/${testId}/${value.id}${submit ? "/submit" : ""}?mode=${selection.mode}`,
             submit ? "POST" : "PUT",
             snapshot(value),
           );
@@ -231,7 +319,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
       queue.current = pending.catch(() => {});
       return pending;
     },
-    [adopt, synchronizeClock],
+    [adopt, synchronizeClock, testId, selection.mode],
   );
 
   useEffect(() => {
@@ -277,6 +365,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
       if (
         seconds === 0 &&
         !submitting.current &&
+        !switching.current &&
         performance.now() >= timeoutRetryAt.current
       ) {
         timeoutRetryAt.current = performance.now() + 5000;
@@ -299,6 +388,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
       value.status !== "active" ||
       submitting.current ||
       conflict.current ||
+      switching.current ||
       remaining === 0
     )
       return;
@@ -309,30 +399,74 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
     setEdit((n) => n + 1);
   }
   async function start() {
+    if (actionBusy.current) return;
+    actionBusy.current = true;
     setBusy(true);
     setError("");
     try {
-      const response = await request<Attempt>("/api/private/attempts", "POST", {
-        testId,
-        mode: selection.mode,
-      });
-      synchronizeClock(response.serverNow);
-      conflict.current = false;
-      setHasConflict(false);
-      dirty.current = false;
-      sequence.current = 0;
-      setRemaining(
-        response.data.deadline
-          ? Math.ceil((response.data.deadline - response.serverNow) / 1000)
-          : null,
+      const response = await request<Attempt>(
+        `/api/private/listening-attempts/${testId}?mode=${selection.mode}`,
+        "POST",
       );
-      adopt(response.data);
-      setPageNumber(null);
-      setImageError(false);
+      activate(response);
       setSaveStatus("Session started");
     } catch (failure) {
       setError(
         failure instanceof Error ? failure.message : "Could not start session.",
+      );
+    } finally {
+      actionBusy.current = false;
+      setBusy(false);
+    }
+  }
+  async function resume(id: string) {
+    if (actionBusy.current) return;
+    actionBusy.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      activate(
+        await request<Attempt>(
+          `/api/private/listening-attempts/${testId}/${encodeURIComponent(id)}?mode=${selection.mode}`,
+        ),
+      );
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not restore selected attempt.",
+      );
+    } finally {
+      actionBusy.current = false;
+      setBusy(false);
+    }
+  }
+  async function chooseAttempt() {
+    if (switching.current || actionBusy.current || submitting.current) return;
+    const position = audioControl.current?.pauseAndRead();
+    if (position && current.current?.status === "active")
+      change({ audioIndex: position.index, audioTime: position.time });
+    switching.current = true;
+    setBusy(true);
+    try {
+      if (conflict.current)
+        throw Error(
+          "Resolve the revision conflict before switching attempts. Your browser draft is retained.",
+        );
+      await save();
+      if (dirty.current)
+        throw Error(
+          "The current attempt has unsaved edits. Retry saving before switching.",
+        );
+      selectedUrl(null);
+      setShowPicker(true);
+      setError("");
+    } catch (failure) {
+      switching.current = false;
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Save failed; current attempt kept open.",
       );
     } finally {
       setBusy(false);
@@ -352,7 +486,11 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
     }
   }
   function navigate(n: number) {
-    if (attempt?.status === "active") change({ active: n });
+    if (current.current?.status === "active")
+      change({
+        active: n,
+        ...(test ? audioForQuestion(test, current.current, n) : {}),
+      });
     else if (attempt) adopt({ ...attempt, active: n });
     const q = test?.questions.find((item) => item.numbers.includes(n));
     if (q?.page) {
@@ -441,6 +579,23 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
           {storageError}
         </p>
       )}
+      {retainedDraft && (
+        <button
+          className="secondary-button"
+          onClick={() => {
+            const url = URL.createObjectURL(
+              new Blob([retainedDraft], { type: "application/json" }),
+            );
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "retained-listening-draft.json";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Download retained browser draft
+        </button>
+      )}
       {loading ? (
         <p role="status">Opening local test…</p>
       ) : !test ? (
@@ -458,39 +613,17 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
               Mode to inspect original sources or open Content Review.
             </p>
           )}
-          {!attempt ? (
-            <section className="placeholder-card">
-              <span className="eyebrow">YOUR LISTENING SESSION</span>
-              <h2>{test.title}</h2>
-              <p>
-                40 questions · 4 parts ·{" "}
-                {test.audio.length === 1
-                  ? "full-test audio"
-                  : "four section recordings"}
-                . {test.interactive ? "Selectable questions with inline answers; original scans are optional." : "Read the original source pages beside your answer sheet."}
-              </p>
-              <p>
-                {selection.mode === "exam"
-                  ? `The countdown begins when you start: ${Math.floor(test.durationSeconds / 60)} minutes ${test.durationSeconds % 60} seconds, based on the recording length plus two minutes to review. Audio plays in sequence without seek controls. Reloading does not reset the deadline.`
-                  : "Work at your own pace. Pause, replay, or switch recordings as needed."}
-              </p>
-              <p>
-                Your answers and bookmarks save automatically on this device. In
-                Exam Mode, the server submits the last saved answers when time
-                expires.
-              </p>
-              <button
-                className="primary-button px-8"
-                disabled={
-                  busy ||
-                  Boolean(error) ||
-                  (selection.mode === "exam" && !test.examReady)
-                }
-                onClick={() => void start()}
-              >
-                {busy ? "Starting…" : "Begin Listening"}
-              </button>
-            </section>
+          {showPicker || !attempt ? (
+            <ListeningAttemptPicker
+              key={`${testId}-${selection.mode}-${attempt?.id ?? "initial"}-${showPicker}`}
+              testId={testId}
+              mode={selection.mode}
+              examReady={!!test.examReady}
+              preferred={attempt?.id}
+              busy={busy}
+              onStart={start}
+              onResume={resume}
+            />
           ) : (
             <>
               <AudioPlayer
@@ -498,9 +631,29 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                 test={test}
                 attempt={attempt}
                 expired={remaining === 0}
-                onPosition={(audioIndex, audioTime) =>
-                  change({ audioIndex, audioTime })
-                }
+                disabled={busy || hasConflict}
+                controlRef={audioControl}
+                onPosition={(audioIndex, audioTime, fromIndex) => {
+                  const value = current.current;
+                  if (
+                    !value ||
+                    value.audioIndex !== fromIndex ||
+                    value.status !== "active" ||
+                    switching.current ||
+                    conflict.current ||
+                    submitting.current ||
+                    remaining === 0
+                  )
+                    return false;
+                  change({
+                    audioIndex,
+                    audioTime,
+                    ...(audioIndex !== fromIndex
+                      ? questionForRecording(test, value, audioIndex)
+                      : {}),
+                  });
+                  return true;
+                }}
               />
               <div className="session-toolbar">
                 <span role="status">{saveStatus}</span>
@@ -508,7 +661,7 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                   {answered} / 40 answered · {attempt.bookmarks.length}{" "}
                   bookmarked
                 </span>
-                {attempt.status === "active" && test.gradingReady!==false && (
+                {attempt.status === "active" && test.gradingReady !== false && (
                   <button
                     className="primary-button"
                     disabled={locked}
@@ -517,13 +670,31 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                     Submit answers
                   </button>
                 )}
-                {attempt.status==="active" && attempt.mode==="practice" && test.id==="19-2" && <button className="secondary-button" disabled={locked} onClick={()=>{
-                  if(!window.confirm("Start a blank attempt? Your current attempt will be saved privately."))return;
-                  setBusy(true);
-                  void save().then(()=>start()).catch(failure=>setError(failure instanceof Error?failure.message:"Could not save the current attempt.")).finally(()=>setBusy(false));
-                }}>Start a new attempt</button>}
+                <button
+                  className="secondary-button"
+                  disabled={locked && attempt.status === "active"}
+                  onClick={() => void chooseAttempt()}
+                >
+                  Choose Attempt
+                </button>
               </div>
-              {test.gradingReady===false && attempt.status==="active" && <p className="workspace-alert">Needs Review — Practice answers and annotations are saved. Exam Mode and grading require actual human source review and a valid full-unit certificate.</p>}
+              {attempt.mode === "practice" &&
+                hasPartRecordings(test) &&
+                attempt.audioIndex !==
+                  Math.floor((attempt.active - 1) / 10) && (
+                  <p className="workspace-alert">
+                    Your saved question Part and recording differ. Choose a Part
+                    to synchronize the recording from 0:00; your answers and
+                    notes are retained.
+                  </p>
+                )}
+              {test.gradingReady === false && attempt.status === "active" && (
+                <p className="workspace-alert">
+                  Needs Review — Practice answers and annotations are saved.
+                  Exam Mode and grading require actual human source review and a
+                  valid full-unit certificate.
+                </p>
+              )}
               {confirm && (
                 <section
                   role="alertdialog"
@@ -566,13 +737,6 @@ export function ListeningWorkspace({ selection }: { selection: Selection }) {
                       <p>Not scored: {attempt.result.excluded.join(", ")}.</p>
                     )}
                   </div>
-                  <button
-                    className="secondary-button"
-                    disabled={busy}
-                    onClick={() => void start()}
-                  >
-                    Start a new attempt
-                  </button>
                 </section>
               )}
               <div className="part-tabs" aria-label="Listening parts">

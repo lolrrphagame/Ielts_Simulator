@@ -50,6 +50,8 @@ These values illustrate the format only; measure actual chart bounds, preserving
 
 ## Privacy and persistence
 
+Phase 5L.2 unifies Listening attempt selection/history across tests. The private `listening-attempts/<test>?mode=...` endpoints expose metadata only; scoped child endpoints validate test/mode before reading or changing an attempt. Existing files and submitted snapshots are not migrated/regraded. Practice Part/audio synchronization uses section metadata and leaves full-test recordings and Exam question navigation independent. Source verification remains a separate gate. See [Phase 5L.2 QA](../../QA_PHASE_5L_2.md).
+
 Converted JSON is loaded at runtime through the authenticated local API; no content imports enter public bundles. Source/crop endpoints use validated unit IDs and allowlisted filenames. Responses are private/no-store. The custom server binds loopback, checks the actual socket/Host/Origin, strips forged internal headers and requires a same-origin local session. Ordinary `next start` cannot authorize these endpoints. This is a single-user local tool, not a hosted multi-user service.
 
 Listening answers, bookmarks, audio position and annotations share the existing attempt autosave and server-side grading. Selection anchors use stable text IDs and UTF-16 offsets; overlapping highlights/underlines and notes survive reload. Other study drafts use browser storage and revision-checked atomic server writes under `web/.local/study`. Conflicting tabs require reload. Keys remain server-side even after submission.

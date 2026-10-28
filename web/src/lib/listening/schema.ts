@@ -84,6 +84,11 @@ export type AttemptUpdate = Pick<
   | "audioTime"
   | "annotations"
 >;
+export type ListeningAttemptSummary = {
+  id:string;testId:TestId;mode:Mode;status:"active"|"submitted";
+  startedAt:number;submittedAt:number|null;answered:number;score:number|null;
+};
+export const blankListeningResponses=():Responses=>Object.fromEntries(Array.from({length:40},(_,i)=>[String(i+1),""]));
 
 export function parseTestId(value: string): TestId {
   if (!/^(19|20|21)-[1-4]$/.test(value)) throw new Error("Invalid test ID");

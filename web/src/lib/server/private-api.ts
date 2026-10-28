@@ -7,6 +7,7 @@ import { parseRange } from "../listening/range";
 import { parseTestId, type Mode } from "../listening/schema";
 import { audioFiles, loadTest, sourceFiles } from "./assets";
 import { accessAttempt, createAttempt, HttpError } from "./attempts";
+import {listeningScope,listListeningAttempts} from "./attempts";
 import { loadQuestionDocument } from "./question-content";
 import { conversionDetail, inventory, unitParts } from "./conversion-store";
 import { containedFile } from "./assets";
@@ -156,6 +157,12 @@ export async function privateApi(request: Request, segments: string[]) {
     );
   try {
     const [resource, id, action, assetId] = segments;
+    if(resource==="listening-attempts") {
+      const scope=listeningScope(id,new URL(request.url).searchParams.get("mode")??"practice");
+      if(segments.length===2 && ["GET","POST"].includes(request.method))return Response.json({data:request.method==="GET"?await listListeningAttempts(scope.testId,scope.mode):await createAttempt(scope.testId,scope.mode),serverNow:Date.now()},{headers:privateHeaders});
+      if((segments.length===3 && ["GET","PUT"].includes(request.method)) || (segments.length===4 && assetId==="submit" && request.method==="POST"))return Response.json({data:await accessAttempt(action,{scope,...(request.method!=="GET"?{update:await jsonBody(request)}:{}),submit:request.method==="POST"}),serverNow:Date.now()},{headers:privateHeaders});
+      throw new HttpError(404,"Listening attempt endpoint not found.");
+    }
     if(resource === "reading-review" && segments.length===2 && ["GET","PUT"].includes(request.method)) {
       return Response.json({data:request.method==="GET" ? await readingReviewState(id) : await saveReadingPageReview(id,await jsonBody(request))},{headers:privateHeaders});
     }

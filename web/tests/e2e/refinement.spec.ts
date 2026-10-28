@@ -189,7 +189,7 @@ test("C19 T1 Listening punctuation, compact map letters and click-to-unhighlight
   let id: string | undefined;
   try {
     await page.goto("/exam/19/1/listening/practice");
-    await page.getByRole("button", { name: "Begin Listening" }).click();
+    await page.getByRole("button", { name: "Start New Attempt" }).click();
     await expect(page.locator(".source-notes")).toContainText("park’s");
     await expect(page.locator(".source-notes")).toContainText("£");
     const text = page.locator('[data-text-id="title"]');
