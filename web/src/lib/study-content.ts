@@ -1,62 +1,219 @@
-export type ReadingQuestion = { number: number; before: string; after: string; options?: string[] };
-export type ReadingPassage = {
-  id: string; title: string; instruction: string;
-  paragraphs: { id: string; text: string }[];
-  groups: { id: string; title: string; instructions: string[]; questions: ReadingQuestion[] }[];
+export type ReadingQuestion = {
+  number: number;
+  before: string;
+  after: string;
+  options?: string[];
+  numbers?: number[];
+  choices?: { value: string; label: string }[];
 };
-export type WritingTask = { id: "task1" | "task2"; title: string; paragraphs: string[]; chart?: "task-1-enhanced.png" };
+export type ReadingPassage = {
+  id: string;
+  title: string;
+  instruction: string;
+  subtitle?: string;
+  footnote?: string;
+  sourcePages?: string[];
+  paragraphs: { id: string; text: string; label?: string }[];
+  groups: {
+    id: string;
+    title: string;
+    instructions: string[];
+    questions: ReadingQuestion[];
+    layout?: "summary";
+  }[];
+};
+export type WritingTask = {
+  id: "task1" | "task2";
+  title: string;
+  paragraphs: string[];
+  chart?: "task-1-enhanced.png";
+};
 export type ReviewedStudy = {
-  version: 1; sourcePages: { page: string; sha256: string }[];
-} & ({ kind: "reading"; passages: ReadingPassage[] } | { kind: "writing"; tasks: WritingTask[] });
+  version: 1;
+  sourcePages: { page: string; sha256: string }[];
+} & (
+  | { kind: "reading"; passages: ReadingPassage[] }
+  | { kind: "writing"; tasks: WritingTask[] }
+);
 
 // Reject unknown properties, including answer keys, at the private API boundary.
 function object(value: unknown, keys: string[]): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).some(k => !keys.includes(k))) throw Error("Invalid reviewed content object");
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).some((k) => !keys.includes(k))
+  )
+    throw Error("Invalid reviewed content object");
   return value as Record<string, unknown>;
 }
 function text(value: unknown): string {
-  if (typeof value !== "string" || value.length > 10000 || value !== value.normalize("NFC") || /\uFFFD/.test(value)) throw Error("Invalid reviewed UTF-8 text");
+  if (
+    typeof value !== "string" ||
+    value.length > 10000 ||
+    value !== value.normalize("NFC") ||
+    /\uFFFD/.test(value)
+  )
+    throw Error("Invalid reviewed UTF-8 text");
   return value;
 }
 function list(value: unknown): unknown[] {
-  if (!Array.isArray(value) || value.length > 100) throw Error("Invalid reviewed list");
+  if (!Array.isArray(value) || value.length > 100)
+    throw Error("Invalid reviewed list");
   return value;
 }
 export function parseReviewedStudy(value: unknown): ReviewedStudy {
-  const v = object(value, ["version", "kind", "sourcePages", "passages", "tasks"]);
-  if (v.version !== 1 || !["reading", "writing"].includes(String(v.kind))) throw Error("Invalid reviewed kind");
-  const sourcePages = list(v.sourcePages).map(entry => {
+  const v = object(value, [
+    "version",
+    "kind",
+    "sourcePages",
+    "passages",
+    "tasks",
+  ]);
+  if (v.version !== 1 || !["reading", "writing"].includes(String(v.kind)))
+    throw Error("Invalid reviewed kind");
+  const sourcePages = list(v.sourcePages).map((entry) => {
     const s = object(entry, ["page", "sha256"]);
-    if (!/^page_\d+\.png$/.test(text(s.page)) || !/^[a-f0-9]{64}$/.test(text(s.sha256))) throw Error("Invalid provenance");
+    if (
+      !/^page_\d+\.png$/.test(text(s.page)) ||
+      !/^[a-f0-9]{64}$/.test(text(s.sha256))
+    )
+      throw Error("Invalid provenance");
     return { page: text(s.page), sha256: text(s.sha256) };
   });
   if (!sourcePages.length) throw Error("Missing provenance");
   if (v.kind === "reading") {
     const numbers = new Set<number>();
     const ids = new Set<string>();
-    const id = (value: unknown) => { const s = text(value); if (!s || ids.has(s)) throw Error("Duplicate text ID"); ids.add(s); return s; };
-    const passages = list(v.passages).map(entry => {
-      const p = object(entry, ["id", "title", "instruction", "paragraphs", "groups"]);
-      return { id: id(p.id), title: text(p.title), instruction: text(p.instruction),
-        paragraphs: list(p.paragraphs).map(entry => { const b = object(entry, ["id", "text"]); return { id: id(b.id), text: text(b.text) }; }),
-        groups: list(p.groups).map(entry => {
-          const g = object(entry, ["id", "title", "instructions", "questions"]);
-          return { id: id(g.id), title: text(g.title), instructions: list(g.instructions).map(text), questions: list(g.questions).map(entry => {
-            const q = object(entry, ["number", "before", "after", "options"]);
-            if (!Number.isInteger(q.number) || Number(q.number) < 1 || Number(q.number) > 40 || numbers.has(Number(q.number))) throw Error("Invalid question coverage");
-            numbers.add(Number(q.number));
-            return { number: Number(q.number), before: text(q.before), after: text(q.after), ...(q.options ? { options: list(q.options).map(text) } : {}) };
-          }) };
-        }) };
+    const id = (value: unknown) => {
+      const s = text(value);
+      if (!s || ids.has(s)) throw Error("Duplicate text ID");
+      ids.add(s);
+      return s;
+    };
+    const passages = list(v.passages).map((entry) => {
+      const p = object(entry, [
+        "id",
+        "title",
+        "instruction",
+        "paragraphs",
+        "groups",
+        "subtitle",
+        "footnote",
+        "sourcePages",
+      ]);
+      return {
+        id: id(p.id),
+        title: text(p.title),
+        instruction: text(p.instruction),
+        ...(p.subtitle ? { subtitle: text(p.subtitle) } : {}),
+        ...(p.footnote ? { footnote: text(p.footnote) } : {}),
+        ...(p.sourcePages
+          ? {
+              sourcePages: list(p.sourcePages).map((name) => {
+                const page = text(name);
+                if (!sourcePages.some((s) => s.page === page))
+                  throw Error("Passage source outside provenance");
+                return page;
+              }),
+            }
+          : {}),
+        paragraphs: list(p.paragraphs).map((entry) => {
+          const b = object(entry, ["id", "text", "label"]);
+          return {
+            id: id(b.id),
+            text: text(b.text),
+            ...(b.label ? { label: text(b.label) } : {}),
+          };
+        }),
+        groups: list(p.groups).map((entry) => {
+          const g = object(entry, [
+            "id",
+            "title",
+            "instructions",
+            "questions",
+            "layout",
+          ]);
+          if (g.layout !== undefined && g.layout !== "summary")
+            throw Error("Invalid question layout");
+          return {
+            id: id(g.id),
+            title: text(g.title),
+            instructions: list(g.instructions).map(text),
+            ...(g.layout ? { layout: "summary" as const } : {}),
+            questions: list(g.questions).map((entry) => {
+              const q = object(entry, [
+                "number",
+                "before",
+                "after",
+                "options",
+                "numbers",
+                "choices",
+              ]);
+              if (
+                !Number.isInteger(q.number) ||
+                Number(q.number) < 1 ||
+                Number(q.number) > 40 ||
+                numbers.has(Number(q.number))
+              )
+                throw Error("Invalid question coverage");
+              numbers.add(Number(q.number));
+              let multiple: Pick<ReadingQuestion, "numbers" | "choices"> = {};
+              if (q.numbers || q.choices) {
+                const slots = list(q.numbers).map(Number);
+                if (
+                  slots.length !== 2 ||
+                  slots[0] !== q.number ||
+                  slots[1] !== slots[0] + 1 ||
+                  slots[1] > 40 ||
+                  numbers.has(slots[1]) ||
+                  q.options
+                )
+                  throw Error("Invalid multiple-choice slots");
+                numbers.add(slots[1]);
+                const choices = list(q.choices).map((entry) => {
+                  const c = object(entry, ["value", "label"]);
+                  return { value: text(c.value), label: text(c.label) };
+                });
+                if (
+                  choices.length < 3 ||
+                  new Set(choices.map((c) => c.value)).size !==
+                    choices.length ||
+                  choices.some((c) => !/^[A-H]$/.test(c.value))
+                )
+                  throw Error("Invalid choices");
+                multiple = { numbers: slots, choices };
+              }
+              return {
+                number: Number(q.number),
+                before: text(q.before),
+                after: text(q.after),
+                ...(q.options ? { options: list(q.options).map(text) } : {}),
+                ...multiple,
+              };
+            }),
+          };
+        }),
+      };
     });
     if (!passages.length || !numbers.size) throw Error("Empty reading content");
     return { version: 1, kind: "reading", sourcePages, passages };
   }
-  const tasks = list(v.tasks).map(entry => {
+  const tasks = list(v.tasks).map((entry) => {
     const t = object(entry, ["id", "title", "paragraphs", "chart"]);
-    if (!["task1", "task2"].includes(String(t.id)) || (t.chart && t.chart !== "task-1-enhanced.png")) throw Error("Invalid writing task");
-    return { id: t.id as WritingTask["id"], title: text(t.title), paragraphs: list(t.paragraphs).map(text), ...(t.chart ? { chart: t.chart as WritingTask["chart"] } : {}) };
+    if (
+      !["task1", "task2"].includes(String(t.id)) ||
+      (t.chart && t.chart !== "task-1-enhanced.png")
+    )
+      throw Error("Invalid writing task");
+    return {
+      id: t.id as WritingTask["id"],
+      title: text(t.title),
+      paragraphs: list(t.paragraphs).map(text),
+      ...(t.chart ? { chart: t.chart as WritingTask["chart"] } : {}),
+    };
   });
-  if (tasks.length !== 2 || tasks[0].id !== "task1" || tasks[1].id !== "task2") throw Error("Incomplete writing tasks");
+  if (tasks.length !== 2 || tasks[0].id !== "task1" || tasks[1].id !== "task2")
+    throw Error("Incomplete writing tasks");
   return { version: 1, kind: "writing", sourcePages, tasks };
 }

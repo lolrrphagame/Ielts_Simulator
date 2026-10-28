@@ -274,3 +274,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .chart-zoom-scroll { overflow: auto; height: calc(100% - 100px); margin-top: 16px; }
 .chart-zoom label { display: flex; gap: 15px; }
 @media (max-width: 800px) { .reading-workspace, .writing-workspace, .speaking-workspace { grid-template-columns: minmax(0,1fr); }.column-divider { display:none; }.reading-passage, .reading-questions { padding: 16px; max-height: 65vh; }.study-controls label { display: none; }.writing-editor textarea { min-height: 45vh; }.study-status > span { margin-left: 0; } }
+.paragraph-label { display: inline-block; min-width: 1.5em; }
+.passage-subtitle { font-style: italic; text-align: center; }
+.passage-footnote { border-top: 1px solid #b7c5d7; font-size: 13px; padding-top: 12px; }
+.reading-multiple { border: 1px solid #d7e1ee; padding: 12px; border-radius: 6px; }
+.reading-multiple legend { font-size: 13px; font-weight: 700; }
+.reading-multiple .structured-option { align-items: baseline; margin-block: 12px; }
+.reading-summary .reading-group-body { border: 1px solid #d7e1ee; padding: 14px; line-height: 2; }
+.reading-summary .reading-question, .reading-summary .reading-question > p { display: inline; margin: 0; }

@@ -50,9 +50,11 @@ Listening answers, bookmarks, audio position and annotations share the existing 
 
 ## Actual outcome and validation
 
-- All 281 source pages processed across 48 units; 2 Verified, 46 Needs Review.
+- All 281 source pages processed across 48 units; 3 Verified, 45 Needs Review. Unit verification is separate from partial Reading passage review.
 - C19 T1 Listening: four reviewed interactive parts, 40 questions, original map crop, real options, inline gaps, existing audio and scoring. Browser test fills all 40 using the private original key and obtains 40/40; also exercises selection/copy/notes, bookmarks, autosave/reload and playback.
 - C19 T1 Speaking: three source-reviewed cards. Other Speaking units remain OCR drafts.
-- Twelve Writing crop/enhancement pairs exist as candidates. Reading and the remaining Listening content still need manual task mapping and source review; OCR coverage is not full interactive exam coverage.
+- C19 T1 Reading Passages 1-2 and questions 1-26 have source-reviewed paragraphs and typed questions; Passage 3 remains Needs Review and full Reading Exam stays locked. The `reviewed-verification.json` certificate binds reviewed content and the exact source pages. Select Passage 1/2/3 in Practice; an unreviewed passage displays its status and optional scans, not fabricated interactive text.
+- C19 T1 Writing Tasks 1-2 and its chart-only crop/enhancement are verified. Eleven other Writing crop pairs remain candidates. Source text and chart pixels are kept separate; chart zoom uses the original-derived enhanced image.
+- `npm run content:quality` flags suspicious Unicode, ambiguous question marks and possible page numbers in raw OCR without replacing them. Findings are private and require visual review. Reviewed UTF-8 content is separate from raw OCR. A normal cached batch preserves existing crop verification; changing source/bounds or forcing a crop rebuild requires fresh review.
 - C20 T1 Listening 17–18 has a known source/key option conflict. Practice preserves the existing unscored treatment; Exam remains blocked.
 - `npm test`, `npm run test:e2e`, `npm run lint`, `npm run build`, `npm run audit:assets` validate schemas, provenance/counts, gates, all-four-part flow, review persistence, private endpoints, audio, deadlines and original-file integrity. Tests read copyrighted fixtures privately rather than embedding them in tracked test code. Browser traces/screenshots are disabled.

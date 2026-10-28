@@ -1,6 +1,6 @@
 # CONTENT_CONVERSION_STATUS
 
-Audit date: 2026-10-27 (Asia/Saigon). Generated from local files; no copyrighted text or answers in this report.
+Audit date: 2026-10-28 (Asia/Saigon). Generated from local files; no copyrighted text or answers in this report.
 
 Units: 48. Source pages: 281. OCR pages current: 281.
 Pending: 0. Needs Review: 45. Verified: 3.
@@ -62,7 +62,7 @@ Verified requires manual source comparison plus structural/key checks and hash-b
 
 - Cambridge 19 Test 1 Listening: four manually transcribed documents, original map crop, real options, inline gaps, shared audio/answers/scoring/annotations. Certification checks all 40 slots and option/key compatibility.
 - Other OCR results are private layout drafts (text, bounding boxes, confidence, candidate question numbers), not fully verified interactive exams. Reading blanks/options/tables still require source review and typed mapping; no guessed questions or answers.
-- Cambridge 19 Test 1 Reading Passage 1 and questions 1-13 are source-reviewed HTML with stable paragraph IDs. Passages 2-3 remain Needs Review, so the full Reading Exam stays locked.
+- Cambridge 19 Test 1 Reading Passages 1-2 and questions 1-26 are source-reviewed HTML with stable paragraph IDs. Passage navigation retains responses and annotations; Passage 3 remains Needs Review, so the full Reading Exam stays locked.
 - Cambridge 19 Test 1 Writing Tasks 1-2 and its chart-only crop are verified. Other Writing crops remain candidates requiring review. No chart generation or invented data.
 - Speaking: only manually reviewed cards may be shown as Verified. OCR alone cannot verify cards.
 - Known source conflict: Cambridge 20 Test 1 Listening questions 17–18 remain unresolved and excluded from grading in Practice. Exam blocked.

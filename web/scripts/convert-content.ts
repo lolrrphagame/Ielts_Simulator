@@ -154,7 +154,9 @@ async function convertPage(worker: Worker, unit: ConversionUnit, name: string) {
       confidence: data.confidence,
       lines,
       detectedQuestions: numbers(lines),
-      qualityWarnings: [...new Set(lines.flatMap(line => ocrQualityWarnings(line.text)))],
+      qualityWarnings: [
+        ...new Set(lines.flatMap((line) => ocrQualityWarnings(line.text))),
+      ],
     };
     if (!lines.length) page.error = "No text recognized";
     await writeJson(target, page);
@@ -207,12 +209,24 @@ async function crops(unit: ConversionUnit) {
     width: Math.floor(meta.width! * 0.88),
     height: Math.floor(meta.height! * 0.61),
   };
-  const prior = await jsonFile<ConversionDetail["crops"]>(path.join(convertedRoot, unit.directory, "crops.json"));
-  if (!args.includes("--force") && prior?.[0]?.sourceSha256 === digest(input) && JSON.stringify(prior[0].box) === JSON.stringify(box)) {
+  const prior = await jsonFile<ConversionDetail["crops"]>(
+    path.join(convertedRoot, unit.directory, "crops.json"),
+  );
+  if (
+    !args.includes("--force") &&
+    prior?.[0]?.sourceSha256 === digest(input) &&
+    JSON.stringify(prior[0].box) === JSON.stringify(box)
+  ) {
     try {
-      await Promise.all(["task-1-original.png", "task-1-enhanced.png"].map(name => readFile(path.join(media, name))));
+      await Promise.all(
+        ["task-1-original.png", "task-1-enhanced.png"].map((name) =>
+          readFile(path.join(media, name)),
+        ),
+      );
       return; // Preserve reviewed crops and their certificates on a resumable batch.
-    } catch { /* Missing derived copy: rebuild, requiring fresh review. */ }
+    } catch {
+      /* Missing derived copy: rebuild, requiring fresh review. */
+    }
   }
   const crop = await sharp(input).extract(box).png().toBuffer();
   await writeFile(path.join(media, "task-1-original.png"), crop);
@@ -268,7 +282,7 @@ async function report() {
     "",
     "- Cambridge 19 Test 1 Listening: four manually transcribed documents, original map crop, real options, inline gaps, shared audio/answers/scoring/annotations. Certification checks all 40 slots and option/key compatibility.",
     "- Other OCR results are private layout drafts (text, bounding boxes, confidence, candidate question numbers), not fully verified interactive exams. Reading blanks/options/tables still require source review and typed mapping; no guessed questions or answers.",
-    "- Cambridge 19 Test 1 Reading Passage 1 and questions 1-13 are source-reviewed HTML with stable paragraph IDs. Passages 2-3 remain Needs Review, so the full Reading Exam stays locked.",
+    "- Cambridge 19 Test 1 Reading Passages 1-2 and questions 1-26 are source-reviewed HTML with stable paragraph IDs. Passage navigation retains responses and annotations; Passage 3 remains Needs Review, so the full Reading Exam stays locked.",
     "- Cambridge 19 Test 1 Writing Tasks 1-2 and its chart-only crop are verified. Other Writing crops remain candidates requiring review. No chart generation or invented data.",
     "- Speaking: only manually reviewed cards may be shown as Verified. OCR alone cannot verify cards.",
     "- Known source conflict: Cambridge 20 Test 1 Listening questions 17–18 remain unresolved and excluded from grading in Practice. Exam blocked.",
@@ -296,15 +310,32 @@ async function main() {
   if (command === "quality") {
     const units = (await inventory()).filter(selected);
     const findings = [];
-    for (const unit of units) for (const name of unit.pages) {
-      const ocr = await jsonFile<OcrPage>(path.join(convertedRoot, unit.directory, "ocr", `${name}.json`));
-      if (!ocr) continue;
-      const lines = ocr.lines.flatMap((line, index) => { const warnings = ocrQualityWarnings(line.text); return warnings.length ? [{ index, warnings }] : []; });
-      if (lines.length) findings.push({ unit: unit.id, page: name, status: "Needs Review", lines });
-    }
+    for (const unit of units)
+      for (const name of unit.pages) {
+        const ocr = await jsonFile<OcrPage>(
+          path.join(convertedRoot, unit.directory, "ocr", `${name}.json`),
+        );
+        if (!ocr) continue;
+        const lines = ocr.lines.flatMap((line, index) => {
+          const warnings = ocrQualityWarnings(line.text);
+          return warnings.length ? [{ index, warnings }] : [];
+        });
+        if (lines.length)
+          findings.push({
+            unit: unit.id,
+            page: name,
+            status: "Needs Review",
+            lines,
+          });
+      }
     await mkdir(path.join(convertedRoot, "pipeline"), { recursive: true });
-    await writeJson(path.join(convertedRoot, "pipeline/quality-findings.json"), { reviewedAt: new Date().toISOString(), findings });
-    console.log(`Flagged ${findings.length} raw OCR pages for source review; no source text replaced.`);
+    await writeJson(
+      path.join(convertedRoot, "pipeline/quality-findings.json"),
+      { reviewedAt: new Date().toISOString(), findings },
+    );
+    console.log(
+      `Flagged ${findings.length} raw OCR pages for source review; no source text replaced.`,
+    );
     return;
   }
   if (command === "verify") {
