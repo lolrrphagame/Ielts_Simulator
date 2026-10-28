@@ -471,6 +471,57 @@ function ReadingQuestions({
                     Clear choices
                   </button>
                 </fieldset>
+              ) : q.choices ? (
+                <fieldset className="reading-single">
+                  <legend>Question {q.number}</legend>
+                  <p>{mark(`reading-q${q.number}-before`, q.before)}</p>
+                  {q.choices.map((choice) => (
+                    <label key={choice.value} className="structured-option">
+                      <input
+                        type="radio"
+                        name={`reading-answer-${q.number}`}
+                        aria-label={choice.value}
+                        checked={responses[q.number] === choice.value}
+                        onChange={() =>
+                          onResponses({ [q.number]: choice.value })
+                        }
+                      />
+                      <strong>{choice.value}</strong>
+                      {mark(
+                        `reading-q${q.number}-option-${choice.value}`,
+                        choice.label,
+                      )}
+                    </label>
+                  ))}
+                  <button
+                    className="text-button"
+                    onClick={() => onResponses({ [q.number]: "" })}
+                  >
+                    Clear answer
+                  </button>
+                </fieldset>
+              ) : q.options && g.layout === "summary" ? (
+                <p>
+                  {mark(`reading-q${q.number}-before`, q.before)}
+                  <label className="inline-gap">
+                    <span className="gap-number">{q.number}</span>
+                    <select
+                      aria-label={`Answer for question ${q.number}`}
+                      value={responses[q.number] ?? ""}
+                      onChange={(e) =>
+                        onResponses({ [q.number]: e.target.value })
+                      }
+                    >
+                      <option value="">—</option>
+                      {q.options.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {mark(`reading-q${q.number}-after`, q.after)}
+                </p>
               ) : q.options ? (
                 <>
                   <p>
@@ -514,6 +565,16 @@ function ReadingQuestions({
           );
         })}
       </div>
+      {g.bank && (
+        <dl className="reading-phrase-bank" aria-label="Phrase choices">
+          {g.bank.map((choice) => (
+            <div key={choice.value}>
+              <dt>{choice.value}</dt>
+              <dd>{mark(`${g.id}-phrase-${choice.value}`, choice.label)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </section>
   ));
 }

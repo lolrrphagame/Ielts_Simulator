@@ -71,7 +71,7 @@ test("private review, OCR annotations, autosave, Writing crops and verified Spea
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.goto("/exam/19/1/reading/exam");
+    await page.goto("/exam/20/1/reading/exam");
     await expect(page.locator("main [role=alert]")).toContainText(
       "not Verified",
     );
@@ -109,7 +109,7 @@ test("conversion APIs remain private, Exam gate is enforced server-side, no answ
   });
   expect(blocked.status()).toBe(403);
   expect(
-    (await request.get("/api/private/study/19-1-reading?mode=exam")).status(),
+    (await request.get("/api/private/study/20-1-reading?mode=exam")).status(),
   ).toBe(403);
   expect(
     (await request.get("/api/private/study/19-1-speaking?mode=exam")).status(),

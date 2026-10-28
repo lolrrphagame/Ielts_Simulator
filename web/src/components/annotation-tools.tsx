@@ -174,7 +174,7 @@ export function AnnotationSurface({
       setSelection({
         anchors,
         x: Math.max(8, Math.min(innerWidth - 320, rect.left)),
-        y: Math.max(8, rect.top - 44),
+        y: Math.max(8, Math.min(innerHeight - 55, rect.top - 44)),
       });
     };
     document.addEventListener("selectionchange", update);

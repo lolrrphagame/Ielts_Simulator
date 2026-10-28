@@ -282,3 +282,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .reading-multiple .structured-option { align-items: baseline; margin-block: 12px; }
 .reading-summary .reading-group-body { border: 1px solid #d7e1ee; padding: 14px; line-height: 2; }
 .reading-summary .reading-question, .reading-summary .reading-question > p { display: inline; margin: 0; }
+.reading-single { border: 1px solid #d7e1ee; padding: 12px; border-radius: 6px; }
+.reading-single legend { font-size: 13px; font-weight: 700; }
+.reading-single .structured-option { margin-block: 10px; }
+.reading-summary .inline-gap select { width: 70px; margin: 0 4px; padding: 3px 5px; display: inline-block; }
+.reading-phrase-bank { border: 1px solid #b8c9df; border-radius: 6px; padding: 14px; margin: 14px 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 18px; font-size: 14px; }
+.reading-phrase-bank > div { display: flex; gap: 10px; }
+.reading-phrase-bank dt { font-weight: 700; }
+@media (max-width: 550px) { .reading-phrase-bank { grid-template-columns: minmax(0,1fr); } }

@@ -3,14 +3,14 @@
 Audit date: 2026-10-28 (Asia/Saigon). Generated from local files; no copyrighted text or answers in this report.
 
 Units: 48. Source pages: 281. OCR pages current: 281.
-Pending: 0. Needs Review: 45. Verified: 3.
+Pending: 0. Needs Review: 44. Verified: 4.
 
 Verified requires manual source comparison plus structural/key checks and hash-bound review evidence. OCR counts/confidence never imply Verified. Exam Mode rejects unverified Listening content on the server; other skills expose only review/practice until a verified task adapter exists.
 
 | Unit | Status | OCR pages / source pages | Candidate question numbers |
 | --- | --- | --- | --- |
 | 19-1-listening | Verified | 6/6 | 40/40 (OCR only) |
-| 19-1-reading | Needs Review | 14/14 | 40/40 (OCR only) |
+| 19-1-reading | Verified | 14/14 | 40/40 (OCR only) |
 | 19-1-writing | Verified | 2/2 | Task/card review required |
 | 19-1-speaking | Verified | 1/1 | Task/card review required |
 | 19-2-listening | Needs Review | 7/7 | 40/40 (OCR only) |
@@ -62,7 +62,7 @@ Verified requires manual source comparison plus structural/key checks and hash-b
 
 - Cambridge 19 Test 1 Listening: four manually transcribed documents, original map crop, real options, inline gaps, shared audio/answers/scoring/annotations. Certification checks all 40 slots and option/key compatibility.
 - Other OCR results are private layout drafts (text, bounding boxes, confidence, candidate question numbers), not fully verified interactive exams. Reading blanks/options/tables still require source review and typed mapping; no guessed questions or answers.
-- Cambridge 19 Test 1 Reading Passages 1-2 and questions 1-26 are source-reviewed HTML with stable paragraph IDs. Passage navigation retains responses and annotations; Passage 3 remains Needs Review, so the full Reading Exam stays locked.
+- Cambridge 19 Test 1 Reading: all three passages and 40 unique answer positions are source-reviewed. Includes single/multiple choice, paragraph matching, phrase-bank summary and YES/NO/NOT GIVEN. Certificates bind the source pages, converted text and private answer key; other Reading units remain Needs Review. Reading saves drafts but does not yet implement timed submission/scoring.
 - Cambridge 19 Test 1 Writing Tasks 1-2 and its chart-only crop are verified. Other Writing crops remain candidates requiring review. No chart generation or invented data.
 - Speaking: only manually reviewed cards may be shown as Verified. OCR alone cannot verify cards.
 - Known source conflict: Cambridge 20 Test 1 Listening questions 17–18 remain unresolved and excluded from grading in Practice. Exam blocked.

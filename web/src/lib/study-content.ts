@@ -20,6 +20,7 @@ export type ReadingPassage = {
     instructions: string[];
     questions: ReadingQuestion[];
     layout?: "summary";
+    bank?: { value: string; label: string }[];
   }[];
 };
 export type WritingTask = {
@@ -133,6 +134,7 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
             "instructions",
             "questions",
             "layout",
+            "bank",
           ]);
           if (g.layout !== undefined && g.layout !== "summary")
             throw Error("Invalid question layout");
@@ -140,6 +142,14 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
             id: id(g.id),
             title: text(g.title),
             instructions: list(g.instructions).map(text),
+            ...(g.bank
+              ? {
+                  bank: list(g.bank).map((entry) => {
+                    const c = object(entry, ["value", "label"]);
+                    return { value: text(c.value), label: text(c.label) };
+                  }),
+                }
+              : {}),
             ...(g.layout ? { layout: "summary" as const } : {}),
             questions: list(g.questions).map((entry) => {
               const q = object(entry, [
@@ -159,7 +169,7 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                 throw Error("Invalid question coverage");
               numbers.add(Number(q.number));
               let multiple: Pick<ReadingQuestion, "numbers" | "choices"> = {};
-              if (q.numbers || q.choices) {
+              if (q.numbers) {
                 const slots = list(q.numbers).map(Number);
                 if (
                   slots.length !== 2 ||
@@ -183,6 +193,18 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
                 )
                   throw Error("Invalid choices");
                 multiple = { numbers: slots, choices };
+              } else if (q.choices) {
+                const choices = list(q.choices).map((entry) => {
+                  const c = object(entry, ["value", "label"]);
+                  return { value: text(c.value), label: text(c.label) };
+                });
+                if (
+                  q.options ||
+                  choices.length !== 4 ||
+                  choices.map((c) => c.value).join("") !== "ABCD"
+                )
+                  throw Error("Invalid single-choice options");
+                multiple = { choices };
               }
               return {
                 number: Number(q.number),
@@ -216,4 +238,46 @@ export function parseReviewedStudy(value: unknown): ReviewedStudy {
   if (tasks.length !== 2 || tasks[0].id !== "task1" || tasks[1].id !== "task2")
     throw Error("Incomplete writing tasks");
   return { version: 1, kind: "writing", sourcePages, tasks };
+}
+
+export function validateCompleteReading(content: ReviewedStudy) {
+  if (
+    content.kind !== "reading" ||
+    content.passages.map((p) => p.id).join() !== "passage-1,passage-2,passage-3"
+  )
+    throw Error("Three reviewed passages required");
+  const slots = content.passages.flatMap((p) =>
+    p.groups.flatMap((g) =>
+      g.questions.flatMap((q) => q.numbers ?? [q.number]),
+    ),
+  );
+  if (
+    slots.length !== 40 ||
+    new Set(slots).size !== 40 ||
+    slots.join() !== Array.from({ length: 40 }, (_, i) => i + 1).join()
+  )
+    throw Error("Reading requires 40 unique answer positions");
+  for (const [i, p] of content.passages.entries()) {
+    const expected = i === 2 ? 14 : 13;
+    if (
+      !p.paragraphs.length ||
+      !p.sourcePages?.length ||
+      p.groups.flatMap((g) =>
+        g.questions.flatMap((q) => q.numbers ?? [q.number]),
+      ).length !== expected
+    )
+      throw Error("Incomplete passage coverage");
+    for (const g of p.groups)
+      if (g.bank) {
+        const letters = g.bank.map((c) => c.value);
+        if (
+          new Set(letters).size !== letters.length ||
+          letters.some((l) => !/^[A-Z]$/.test(l)) ||
+          g.questions.some(
+            (q) => !q.options || q.options.join() !== letters.join(),
+          )
+        )
+          throw Error("Phrase bank and options mismatch");
+      }
+  }
 }

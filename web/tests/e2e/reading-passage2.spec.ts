@@ -44,6 +44,9 @@ test("C19 T1 Passage 2: real 14-26, choose-two limits, inline summary, passage n
             name: `Questions ${q.numbers.join("–")}`,
             exact: true,
           });
+          await choices
+            .getByRole("button", { name: "Clear choices", exact: true })
+            .click();
           for (const letter of key[q.number])
             await choices
               .getByRole("checkbox", {
@@ -124,12 +127,12 @@ test("C19 T1 Passage 2: real 14-26, choose-two limits, inline summary, passage n
     );
     await expect(page.locator(".optional-scan a")).toHaveCount(5);
     await page.getByRole("button", { name: /Passage 3/ }).click();
-    await expect(page.locator(".reading-passage")).toContainText(
-      "Needs Review",
+    await expect(page.locator(".reading-passage h2")).toHaveText(
+      content.passages[2].title,
     );
     await expect(
       page.locator(".reading-questions input, .reading-questions select"),
-    ).toHaveCount(0);
+    ).toHaveCount(26);
     await page
       .getByRole("button", { name: "View original scan", exact: true })
       .click();

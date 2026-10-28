@@ -12,6 +12,7 @@ import { parseTestId, parseAnswerKey } from "../listening/schema";
 import { projectRoot, containedFile } from "./assets";
 import { loadQuestionDocument } from "./question-content";
 import { reviewedStudy } from "./reviewed-study";
+import { validateCompleteReading } from "../study-content";
 
 export const convertedRoot = path.join(projectRoot, "private-content");
 export const digest = (value: Buffer | string) =>
@@ -182,7 +183,14 @@ export async function conversionDetail(id: string): Promise<ConversionDetail> {
         )
       : null;
   const reviewed = await reviewedStudy(directory);
-  return { unit, pages, crops, documents, ...(cards ? { cards } : {}), ...(reviewed ? { reviewed } : {}) };
+  return {
+    unit,
+    pages,
+    crops,
+    documents,
+    ...(cards ? { cards } : {}),
+    ...(reviewed ? { reviewed } : {}),
+  };
 }
 export async function certify(id: string, reviewer: string) {
   const { testId, skill, directory } = unitParts(id);
@@ -230,11 +238,40 @@ export async function certify(id: string, reviewer: string) {
       `private-content/${directory}/media/farley-map.png`,
       "answers/Cambridge19/T1_Listening.json",
     );
+  } else if (skill === "reading") {
+    const reviewed = await reviewedStudy(directory);
+    if (!reviewed || reviewed.kind !== "reading")
+      throw Error("Source-reviewed Reading required");
+    validateCompleteReading(reviewed);
+    const keyPath = `answers/${directory}.json`;
+    const key = parseAnswerKey(
+      JSON.parse(await readFile(await containedFile(keyPath), "utf8")),
+    );
+    for (const q of reviewed.passages.flatMap((p) =>
+      p.groups.flatMap((g) => g.questions),
+    )) {
+      const options = q.options ?? q.choices?.map((c) => c.value);
+      for (const n of q.numbers ?? [q.number])
+        if (options && key[n].some((a) => !options.includes(a.toUpperCase())))
+          throw Error("Reading key/options mismatch");
+    }
+    files.push(
+      `private-content/${directory}/reviewed.json`,
+      `private-content/${directory}/reviewed-verification.json`,
+      keyPath,
+    );
   } else if (skill === "writing") {
     const reviewed = await reviewedStudy(directory);
-    if (reviewed?.kind !== "writing") throw new Error("Source-reviewed writing tasks and chart required");
-    files.push(`private-content/${directory}/reviewed.json`, `private-content/${directory}/reviewed-verification.json`,
-      `private-content/${directory}/crops.json`, ...["task-1-original.png", "task-1-enhanced.png"].map(f => `private-content/${directory}/media/${f}`));
+    if (reviewed?.kind !== "writing")
+      throw new Error("Source-reviewed writing tasks and chart required");
+    files.push(
+      `private-content/${directory}/reviewed.json`,
+      `private-content/${directory}/reviewed-verification.json`,
+      `private-content/${directory}/crops.json`,
+      ...["task-1-original.png", "task-1-enhanced.png"].map(
+        (f) => `private-content/${directory}/media/${f}`,
+      ),
+    );
   } else if (skill === "speaking") {
     const cards = await jsonFile<ConversionDetail["cards"]>(
       path.join(convertedRoot, directory, "cards.json"),

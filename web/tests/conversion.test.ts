@@ -29,9 +29,9 @@ test("batch inventory covers all 48 units and 281 current OCR pages without auto
   );
   assert.deepEqual(
     units.filter((u) => u.status === "Verified").map((u) => u.id),
-    ["19-1-listening", "19-1-writing", "19-1-speaking"],
+    ["19-1-listening", "19-1-reading", "19-1-writing", "19-1-speaking"],
   );
-  assert.equal(units.filter((u) => u.status === "Needs Review").length, 45);
+  assert.equal(units.filter((u) => u.status === "Needs Review").length, 44);
   for (const id of ["../19-1-listening", "19-5-reading", "22-1-writing"])
     assert.throws(() => unitParts(id));
 });
@@ -94,7 +94,10 @@ test("Exam gate and certification cannot promote unreviewed OCR units", async ()
   assert.equal(await isVerified("19-1-listening"), true);
   assert.equal(await isVerified("20-1-listening"), false);
   await assert.rejects(createAttempt("20-1", "exam"), /Verified/);
-  await assert.rejects(certify("19-1-reading", "test"), /No verified renderer/);
+  await assert.rejects(
+    certify("20-1-reading", "test"),
+    /Source-reviewed Reading required/,
+  );
 });
 
 test("Writing crops retain source provenance and Speaking cards require verification", async () => {
