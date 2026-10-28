@@ -109,6 +109,7 @@ export function ReadingAttemptPicker({
                 {a.legacy
                   ? "Previous saved draft"
                   : `${new Date(a.createdAt).toLocaleString()} · ${a.id.slice(0, 8)}`}
+                {a.status === "submitted" ? ` · Submitted · ${a.score}/40` : ""}
               </option>
             ))}
           </select>
@@ -118,7 +119,9 @@ export function ReadingAttemptPicker({
           disabled={loading || busy || !selected}
           onClick={() => onOpen(selected)}
         >
-          Resume Attempt
+          {attempts.find((a) => a.id === selected)?.status === "submitted"
+            ? "View Results"
+            : "Resume Attempt"}
         </button>
       </div>
     </section>

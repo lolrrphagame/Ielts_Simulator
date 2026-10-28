@@ -7,6 +7,12 @@ import type { StudyDraft } from "@/lib/server/study-drafts";
 import { AnnotationSurface } from "./annotation-tools";
 import type { ReadingPassage } from "@/lib/study-content";
 import type { ReactNode } from "react";
+import {
+  ReadingResults,
+  ReadingAnswerReview,
+  ReadingSubmitConfirmation,
+  type ReviewFilter,
+} from "./reading-results";
 
 export function StudyWorkspace({
   detail,
@@ -14,17 +20,23 @@ export function StudyWorkspace({
   onChange,
   status,
   error,
+  onSubmit,
+  submitting = false,
 }: {
   detail: ConversionDetail;
   draft: StudyDraft;
   onChange: (patch: Partial<StudyDraft>) => void;
   status: string;
   error: string;
+  onSubmit?: () => Promise<void>;
+  submitting?: boolean;
 }) {
   const [scan, setScan] = useState(false);
   const [task, setTask] = useState(0);
   const [width, setWidth] = useState(52);
   const [zoom, setZoom] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
   const [passageNumber, setPassageNumber] = useState(() => {
     if (typeof window === "undefined") return 1;
     const number = Number(
@@ -33,6 +45,17 @@ export function StudyWorkspace({
     return [1, 2, 3].includes(number) ? number : 1;
   });
   const columns = useRef<HTMLDivElement>(null);
+  const locked = !!draft.submission || submitting;
+  const answered = Array.from({ length: 40 }, (_, i) =>
+    draft.responses[i + 1]?.trim(),
+  ).filter(Boolean).length;
+  function goToPassage(n: number) {
+    setPassageNumber(n);
+    setScan(false);
+    const url = new URL(window.location.href);
+    url.searchParams.set("passage", String(n));
+    window.history.replaceState(null, "", url);
+  }
   const content = detail.reviewed;
   const answer = (number: string, value: string) =>
     onChange({ responses: { ...draft.responses, [number]: value } });
@@ -97,6 +120,37 @@ export function StudyWorkspace({
       )}
       {content?.kind === "reading" && (
         <>
+          {draft.submission && (
+            <ReadingResults
+              submission={draft.submission}
+              onPassage={(n) => {
+                setReviewFilter("all");
+                goToPassage(n);
+              }}
+            />
+          )}
+          {onSubmit && !draft.submission && (
+            <div className="reading-submit-bar">
+              <span>
+                {answered} answered · {40 - answered} unanswered
+              </span>
+              <button
+                className="primary-button"
+                disabled={submitting}
+                onClick={() => setConfirming(true)}
+              >
+                Submit Reading
+              </button>
+            </div>
+          )}
+          {confirming && !draft.submission && (
+            <ReadingSubmitConfirmation
+              answered={answered}
+              busy={submitting}
+              onConfirm={() => void onSubmit?.()}
+              onClose={() => setConfirming(false)}
+            />
+          )}
           <nav className="study-tabs" aria-label="Reading passages">
             {[1, 2, 3].map((n) => (
               <button
@@ -141,6 +195,7 @@ export function StudyWorkspace({
             contentId={`${detail.unit.id}-reviewed-reading-v1`}
             annotations={draft.annotations}
             onChange={(annotations) => onChange({ annotations })}
+            disabled={locked}
           >
             {(mark) => (
               <div
@@ -237,7 +292,15 @@ export function StudyWorkspace({
                   className="reading-questions"
                   aria-label="Reading questions"
                 >
-                  {passage ? (
+                  {draft.submission ? (
+                    <ReadingAnswerReview
+                      submission={draft.submission}
+                      passage={passageNumber}
+                      source={passage}
+                      filter={reviewFilter}
+                      onFilter={setReviewFilter}
+                    />
+                  ) : passage ? (
                     <ReadingQuestions
                       passage={passage}
                       mark={mark}
@@ -247,6 +310,7 @@ export function StudyWorkspace({
                           responses: { ...draft.responses, ...patch },
                         })
                       }
+                      disabled={locked}
                     />
                   ) : (
                     <p>
@@ -382,6 +446,7 @@ export function StudyWorkspace({
         <textarea
           aria-label="Review notes"
           value={draft.notes}
+          disabled={!!draft.submission || submitting}
           maxLength={10000}
           onChange={(e) => onChange({ notes: e.target.value })}
         />
@@ -395,11 +460,13 @@ function ReadingQuestions({
   mark,
   responses,
   onResponses,
+  disabled = false,
 }: {
   passage: ReadingPassage;
   mark: (id: string, text: string) => ReactNode;
   responses: Record<string, string>;
   onResponses: (patch: Record<string, string>) => void;
+  disabled?: boolean;
 }) {
   return passage.groups.map((g) => (
     <section
@@ -413,98 +480,122 @@ function ReadingQuestions({
         </p>
       ))}
       <div className="reading-group-body">
-        {g.questions.map((q) => {
-          const selected = (q.numbers ?? [])
-            .map((n) => responses[n])
-            .filter(Boolean);
-          return (
-            <div
-              className="reading-question"
-              key={q.number}
-              id={`reading-question-${q.number}`}
-            >
-              {q.numbers && q.choices ? (
-                <fieldset className="reading-multiple">
-                  <legend>Questions {q.numbers.join("–")}</legend>
-                  <p>{mark(`reading-q${q.number}-before`, q.before)}</p>
-                  {q.choices.map((choice) => (
-                    <label key={choice.value} className="structured-option">
-                      <input
-                        type="checkbox"
-                        aria-label={choice.value}
-                        checked={selected.includes(choice.value)}
-                        disabled={
-                          !selected.includes(choice.value) &&
-                          selected.length >= q.numbers!.length
+        <fieldset disabled={disabled} className="reading-question-fields">
+          {g.questions.map((q) => {
+            const selected = (q.numbers ?? [])
+              .map((n) => responses[n])
+              .filter(Boolean);
+            return (
+              <div
+                className="reading-question"
+                key={q.number}
+                id={`reading-question-${q.number}`}
+              >
+                {q.numbers && q.choices ? (
+                  <fieldset className="reading-multiple">
+                    <legend>Questions {q.numbers.join("–")}</legend>
+                    <p>{mark(`reading-q${q.number}-before`, q.before)}</p>
+                    {q.choices.map((choice) => (
+                      <label key={choice.value} className="structured-option">
+                        <input
+                          type="checkbox"
+                          aria-label={choice.value}
+                          checked={selected.includes(choice.value)}
+                          disabled={
+                            !selected.includes(choice.value) &&
+                            selected.length >= q.numbers!.length
+                          }
+                          onChange={(e) => {
+                            const values = e.target.checked
+                              ? [...selected, choice.value]
+                              : selected.filter((v) => v !== choice.value);
+                            onResponses(
+                              Object.fromEntries(
+                                q.numbers!.map((n, i) => [
+                                  String(n),
+                                  values[i] ?? "",
+                                ]),
+                              ),
+                            );
+                          }}
+                        />
+                        <strong>{choice.value}</strong>
+                        {mark(
+                          `reading-q${q.number}-option-${choice.value}`,
+                          choice.label,
+                        )}
+                      </label>
+                    ))}
+                    <button
+                      className="text-button"
+                      onClick={() =>
+                        onResponses(
+                          Object.fromEntries(
+                            q.numbers!.map((n) => [String(n), ""]),
+                          ),
+                        )
+                      }
+                    >
+                      Clear choices
+                    </button>
+                  </fieldset>
+                ) : q.choices ? (
+                  <fieldset className="reading-single">
+                    <legend>Question {q.number}</legend>
+                    <p>{mark(`reading-q${q.number}-before`, q.before)}</p>
+                    {q.choices.map((choice) => (
+                      <label key={choice.value} className="structured-option">
+                        <input
+                          type="radio"
+                          name={`reading-answer-${q.number}`}
+                          aria-label={choice.value}
+                          checked={responses[q.number] === choice.value}
+                          onChange={() =>
+                            onResponses({ [q.number]: choice.value })
+                          }
+                        />
+                        <strong>{choice.value}</strong>
+                        {mark(
+                          `reading-q${q.number}-option-${choice.value}`,
+                          choice.label,
+                        )}
+                      </label>
+                    ))}
+                    <button
+                      className="text-button"
+                      onClick={() => onResponses({ [q.number]: "" })}
+                    >
+                      Clear answer
+                    </button>
+                  </fieldset>
+                ) : q.options && g.layout === "summary" ? (
+                  <p>
+                    {mark(`reading-q${q.number}-before`, q.before)}
+                    <label className="inline-gap">
+                      <span className="gap-number">{q.number}</span>
+                      <select
+                        aria-label={`Answer for question ${q.number}`}
+                        value={responses[q.number] ?? ""}
+                        onChange={(e) =>
+                          onResponses({ [q.number]: e.target.value })
                         }
-                        onChange={(e) => {
-                          const values = e.target.checked
-                            ? [...selected, choice.value]
-                            : selected.filter((v) => v !== choice.value);
-                          onResponses(
-                            Object.fromEntries(
-                              q.numbers!.map((n, i) => [
-                                String(n),
-                                values[i] ?? "",
-                              ]),
-                            ),
-                          );
-                        }}
-                      />
-                      <strong>{choice.value}</strong>
-                      {mark(
-                        `reading-q${q.number}-option-${choice.value}`,
-                        choice.label,
-                      )}
+                      >
+                        <option value="">—</option>
+                        {q.options.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
                     </label>
-                  ))}
-                  <button
-                    className="text-button"
-                    onClick={() =>
-                      onResponses(
-                        Object.fromEntries(
-                          q.numbers!.map((n) => [String(n), ""]),
-                        ),
-                      )
-                    }
-                  >
-                    Clear choices
-                  </button>
-                </fieldset>
-              ) : q.choices ? (
-                <fieldset className="reading-single">
-                  <legend>Question {q.number}</legend>
-                  <p>{mark(`reading-q${q.number}-before`, q.before)}</p>
-                  {q.choices.map((choice) => (
-                    <label key={choice.value} className="structured-option">
-                      <input
-                        type="radio"
-                        name={`reading-answer-${q.number}`}
-                        aria-label={choice.value}
-                        checked={responses[q.number] === choice.value}
-                        onChange={() =>
-                          onResponses({ [q.number]: choice.value })
-                        }
-                      />
-                      <strong>{choice.value}</strong>
-                      {mark(
-                        `reading-q${q.number}-option-${choice.value}`,
-                        choice.label,
-                      )}
-                    </label>
-                  ))}
-                  <button
-                    className="text-button"
-                    onClick={() => onResponses({ [q.number]: "" })}
-                  >
-                    Clear answer
-                  </button>
-                </fieldset>
-              ) : q.options && g.layout === "summary" ? (
-                <p>
-                  {mark(`reading-q${q.number}-before`, q.before)}
-                  <label className="inline-gap">
-                    <span className="gap-number">{q.number}</span>
+                    {mark(`reading-q${q.number}-after`, q.after)}
+                  </p>
+                ) : q.options ? (
+                  <>
+                    <p>
+                      <strong>{q.number} </strong>
+                      {mark(`reading-q${q.number}-before`, q.before)}
+                    </p>
                     <select
                       aria-label={`Answer for question ${q.number}`}
                       value={responses[q.number] ?? ""}
@@ -512,58 +603,36 @@ function ReadingQuestions({
                         onResponses({ [q.number]: e.target.value })
                       }
                     >
-                      <option value="">—</option>
+                      <option value="">Choose an answer</option>
                       {q.options.map((o) => (
                         <option key={o} value={o}>
                           {o}
                         </option>
                       ))}
                     </select>
-                  </label>
-                  {mark(`reading-q${q.number}-after`, q.after)}
-                </p>
-              ) : q.options ? (
-                <>
+                  </>
+                ) : (
                   <p>
-                    <strong>{q.number} </strong>
                     {mark(`reading-q${q.number}-before`, q.before)}
+                    <label className="inline-gap">
+                      <span className="gap-number">{q.number}</span>
+                      <input
+                        aria-label={`Answer for question ${q.number}`}
+                        autoComplete="off"
+                        maxLength={200}
+                        value={responses[q.number] ?? ""}
+                        onChange={(e) =>
+                          onResponses({ [q.number]: e.target.value })
+                        }
+                      />
+                    </label>
+                    {mark(`reading-q${q.number}-after`, q.after)}
                   </p>
-                  <select
-                    aria-label={`Answer for question ${q.number}`}
-                    value={responses[q.number] ?? ""}
-                    onChange={(e) =>
-                      onResponses({ [q.number]: e.target.value })
-                    }
-                  >
-                    <option value="">Choose an answer</option>
-                    {q.options.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              ) : (
-                <p>
-                  {mark(`reading-q${q.number}-before`, q.before)}
-                  <label className="inline-gap">
-                    <span className="gap-number">{q.number}</span>
-                    <input
-                      aria-label={`Answer for question ${q.number}`}
-                      autoComplete="off"
-                      maxLength={200}
-                      value={responses[q.number] ?? ""}
-                      onChange={(e) =>
-                        onResponses({ [q.number]: e.target.value })
-                      }
-                    />
-                  </label>
-                  {mark(`reading-q${q.number}-after`, q.after)}
-                </p>
-              )}
-            </div>
-          );
-        })}
+                )}
+              </div>
+            );
+          })}
+        </fieldset>
       </div>
       {g.bank && (
         <dl className="reading-phrase-bank" aria-label="Phrase choices">

@@ -181,8 +181,8 @@ export async function privateApi(request: Request, segments: string[]) {
     }
     if (
       resource === "study" &&
-      segments.length === 2 &&
-      ["GET", "PUT"].includes(request.method)
+      ((segments.length === 2 && ["GET", "PUT"].includes(request.method)) ||
+       (segments.length === 3 && action === "submit" && request.method === "POST"))
     ) {
       const mode = new URL(request.url).searchParams.get("mode") ?? "practice";
       unitParts(id);
@@ -194,8 +194,9 @@ export async function privateApi(request: Request, segments: string[]) {
       const draft = await studyDraft(
         id,
         mode,
-        request.method === "PUT" ? await jsonBody(request) : undefined,
+        ["PUT","POST"].includes(request.method) ? await jsonBody(request) : undefined,
         new URL(request.url).searchParams.get("attempt") ?? undefined,
+        request.method === "POST",
       );
       return Response.json(
         {

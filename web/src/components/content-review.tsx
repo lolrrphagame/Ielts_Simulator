@@ -124,6 +124,8 @@ function ReviewUnit({
 }) {
   const [detail, setDetail] = useState<ConversionDetail | null>(null);
   const [draft, setDraft] = useState<StudyDraft | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const current = useRef<StudyDraft | null>(null);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("Loading…");
@@ -167,12 +169,19 @@ function ReviewUnit({
         let recovered = body.data.draft;
         try {
           const stored = JSON.parse(localStorage.getItem(storageKey) ?? "null");
-          if (stored?.revision === recovered.revision) recovered = stored;
+          if (
+            !recovered.submission &&
+            !stored?.submission &&
+            stored?.revision === recovered.revision
+          )
+            recovered = stored;
         } catch {}
         current.current = recovered;
         setDraft(recovered);
-        setStatus("Draft restored");
-        setEdit(1);
+        setStatus(
+          recovered.submission ? "Submitted — read only" : "Draft restored",
+        );
+        if (!recovered.submission) setEdit(1);
       } catch (e) {
         if (live) setError(e instanceof Error ? e.message : "Load failed");
       }
@@ -188,7 +197,7 @@ function ReviewUnit({
         .catch(() => {})
         .then(async () => {
           const value = current.current;
-          if (!value) return;
+          if (!value || value.submission || submittingRef.current) return;
           const sent = sequence.current;
           try {
             const response = await fetch(endpoint, {
@@ -234,11 +243,47 @@ function ReviewUnit({
     return () => document.removeEventListener("selectionchange", update);
   }, []);
   function change(patch: Partial<StudyDraft>) {
-    if (!current.current) return;
+    if (!current.current || current.current.submission || submittingRef.current)
+      return;
     sequence.current++;
     keep({ ...current.current, ...patch });
     setStatus("Saved in browser · syncing…");
     setEdit((n) => n + 1);
+  }
+  async function submitReading() {
+    if (submittingRef.current || current.current?.submission) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setError("");
+    try {
+      await chain.current.catch(() => {});
+      const value = current.current;
+      if (!value) throw Error("Load the attempt before submission.");
+      const response = await fetch(endpoint.replace("?", "/submit?"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...value, revision: revision.current }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw Error(body.error);
+      revision.current = body.data.revision;
+      current.current = body.data;
+      setDraft(body.data);
+      setEdit(0);
+      setStatus("Submitted — read only");
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(body.data));
+      } catch {}
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Submission failed. Your browser draft is retained.",
+      );
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
   }
   if (!detail || !draft)
     return <p role="alert">{error || "Loading private content…"}</p>;
@@ -250,6 +295,8 @@ function ReviewUnit({
         onChange={change}
         status={status}
         error={error}
+        submitting={submitting}
+        onSubmit={id === "19-1-reading" && attempt ? submitReading : undefined}
       />
     );
   const page = detail.pages[pageIndex];

@@ -144,11 +144,13 @@ export function AnnotationSurface({
   annotations,
   onChange,
   children,
+  disabled = false,
 }: {
   contentId: string;
   annotations: Annotation[];
   onChange: (value: Annotation[]) => void;
   children: (mark: (id: string, text: string) => ReactNode) => ReactNode;
+  disabled?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<{
@@ -181,7 +183,7 @@ export function AnnotationSurface({
     return () => document.removeEventListener("selectionchange", update);
   }, []);
   function add(kind: Annotation["kind"]) {
-    if (!selection || annotations.length >= 100) return;
+    if (disabled || !selection || annotations.length >= 100) return;
     onChange([
       ...annotations,
       {
@@ -259,8 +261,12 @@ export function AnnotationSurface({
           style={{ left: selection.x, top: selection.y }}
           onMouseDown={(e) => e.preventDefault()}
         >
-          <button onClick={() => add("highlight")}>Highlight</button>
-          <button onClick={() => add("underline")}>Underline</button>
+          <button disabled={disabled} onClick={() => add("highlight")}>
+            Highlight
+          </button>
+          <button disabled={disabled} onClick={() => add("underline")}>
+            Underline
+          </button>
           <button
             onClick={() =>
               void navigator.clipboard
@@ -270,7 +276,9 @@ export function AnnotationSurface({
           >
             Copy
           </button>
-          <button onClick={() => add("note")}>Add Note</button>
+          <button disabled={disabled} onClick={() => add("note")}>
+            Add Note
+          </button>
         </div>
       )}
       {target && (
@@ -281,6 +289,7 @@ export function AnnotationSurface({
           texts={texts}
           onChange={onChange}
           onClose={() => setTarget(null)}
+          disabled={disabled}
         />
       )}
       <div ref={root} className="annotation-surface">
@@ -295,6 +304,7 @@ export function AnnotationSurface({
               <label key={a.id}>
                 Personal note {i + 1}
                 <textarea
+                  disabled={disabled}
                   aria-label={`Personal note ${i + 1}`}
                   value={a.note}
                   maxLength={2000}
@@ -309,6 +319,7 @@ export function AnnotationSurface({
                   }
                 />
                 <button
+                  disabled={disabled}
                   onClick={() =>
                     onChange(annotations.filter((item) => item.id !== a.id))
                   }

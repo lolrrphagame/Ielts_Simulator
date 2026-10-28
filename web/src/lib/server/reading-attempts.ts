@@ -10,6 +10,9 @@ export type ReadingAttempt = {
   mode: string;
   createdAt: string;
   legacy?: boolean;
+  status?: "in-progress" | "submitted";
+  score?: number;
+  submittedAt?: string;
 };
 export function validateReadingScope(unit: string, mode: string) {
   if (
@@ -91,6 +94,22 @@ export async function listReadingAttempts(
     values.push({ id: "legacy", unit, mode, createdAt: "", legacy: true });
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+  }
+  for (const value of values) {
+    try {
+      const filename = `${unit}-${mode}${value.legacy ? "" : `-${value.id}`}.json`;
+      const draft = JSON.parse(
+        await readFile(path.join(localDataRoot(), "study", filename), "utf8"),
+      );
+      value.status = draft.submission ? "submitted" : "in-progress";
+      if (draft.submission) {
+        value.score = draft.submission.result.score;
+        value.submittedAt = draft.submission.submittedAt;
+      }
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+      value.status = "in-progress";
+    }
   }
   return values;
 }

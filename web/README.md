@@ -26,6 +26,8 @@ Cambridge 20 Test 1 có xung đột nguồn ở câu 17–18: lưu nhưng không
 
 ## Kiểm tra
 
+Phase 4C: Cambridge 19 Test 1 Reading có **Submit Reading**, chấm trên server, kết quả và review đáp án sau nộp. Lịch sử có **View Results**; bài đã nộp chỉ đọc. Band là ước tính; thời gian hoạt động chưa được ghi nên hiển thị Not recorded. Xem [Reading scoring](docs/reading-scoring.md) và [QA Phase 4C](../QA_PHASE_4C.md).
+
 Reading: chọn **Start New Attempt** để bắt đầu với đáp án trống, hoặc **Resume Attempt** để tiếp tục bài đã lưu. **Previous saved draft** giữ bài cũ trước khi có cơ chế nhiều lượt làm. Mỗi lượt lưu riêng đáp án, highlight và ghi chú.
 
 Unit/E2E tests dùng thư mục riêng trong `.local/test-runs/`, không ghi vào các phiên thật. Xem [QA Phase 4B.1](../QA_PHASE_4B_1.md).
