@@ -1,3 +1,4 @@
+import { localDataRoot } from "../../src/lib/server/local-data";
 import { test, expect } from "@playwright/test";
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -5,7 +6,7 @@ import path from "node:path";
 test("C19 T1 Passage 2: real 14-26, choose-two limits, inline summary, passage navigation and persistent annotations", async ({
   page,
 }) => {
-  const file = path.resolve(".local/study/19-1-reading-practice.json");
+  const file = path.join(localDataRoot(), "study/19-1-reading-practice.json");
   const previous = await readFile(file).catch(() => null);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -22,7 +23,7 @@ test("C19 T1 Passage 2: real 14-26, choose-two limits, inline summary, passage n
     const key = JSON.parse(
       await readFile("../answers/Cambridge19/T1_Reading.json", "utf8"),
     );
-    await page.goto("/exam/19/1/reading/practice");
+    await page.goto("/exam/19/1/reading/practice?attempt=legacy");
     await page
       .getByLabel("Answer for question 1", { exact: true })
       .selectOption(key[1][0].toUpperCase());

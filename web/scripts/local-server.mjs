@@ -2,14 +2,16 @@ import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import next from "next";
+import path from "node:path";
 import { equalSecret, isLocalRequest } from "./local-security.mjs";
 
 const dev = process.argv.includes("--dev");
 const port = Number(process.env.PORT || 3000);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
   throw new Error("Invalid PORT");
-await mkdir(".local", { recursive: true });
-const secretPath = ".local/access-key";
+const dataRoot=path.resolve(process.env.IELTS_DATA_ROOT || ".local");
+await mkdir(dataRoot, { recursive: true });
+const secretPath = path.join(dataRoot,"access-key");
 try {
   await writeFile(secretPath, randomBytes(32).toString("hex"), {
     flag: "wx",

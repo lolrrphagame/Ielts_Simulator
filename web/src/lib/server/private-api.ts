@@ -12,6 +12,7 @@ import { conversionDetail, inventory, unitParts } from "./conversion-store";
 import { containedFile } from "./assets";
 import { studyDraft } from "./study-drafts";
 import { isVerified } from "./conversion-store";
+import { createReadingAttempt, listReadingAttempts } from "./reading-attempts";
 
 const privateHeaders = {
   "Cache-Control": "private, no-store, max-age=0",
@@ -173,6 +174,11 @@ export async function privateApi(request: Request, segments: string[]) {
     )
       return await assetResponse(request, validId(id), action, assetId);
     let value: unknown;
+    if(resource === "reading-attempts" && segments.length === 2 && ["GET","POST"].includes(request.method)) {
+      const mode=new URL(request.url).searchParams.get("mode") ?? "practice";
+      if(mode === "exam" && !(await isVerified(id))) throw new HttpError(403,"Exam Mode is locked: this content is not Verified.");
+      return Response.json({data:request.method === "POST" ? await createReadingAttempt(id,mode) : await listReadingAttempts(id,mode)}, {headers:privateHeaders});
+    }
     if (
       resource === "study" &&
       segments.length === 2 &&
@@ -189,6 +195,7 @@ export async function privateApi(request: Request, segments: string[]) {
         id,
         mode,
         request.method === "PUT" ? await jsonBody(request) : undefined,
+        new URL(request.url).searchParams.get("attempt") ?? undefined,
       );
       return Response.json(
         {

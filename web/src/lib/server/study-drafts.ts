@@ -4,6 +4,8 @@ import path from "node:path";
 import { unitParts } from "./conversion-store";
 import { HttpError } from "./attempts";
 import { parseAnnotations, type Annotation } from "../listening/content";
+import { localDataRoot } from "./local-data";
+import { requireReadingAttempt } from "./reading-attempts";
 export type StudyDraft = {
   revision: number;
   responses: Record<string, string>;
@@ -15,13 +17,18 @@ export async function studyDraft(
   id: string,
   mode: string,
   update?: unknown,
+  attempt?: string,
 ): Promise<StudyDraft> {
   unitParts(id);
+  if (attempt) await requireReadingAttempt(id, mode, attempt);
   if (!["review", "practice", "exam"].includes(mode))
     throw new HttpError(400, "Invalid study mode");
   const operation = async () => {
-    const directory = path.resolve(".local/study");
-    const file = path.join(directory, `${id}-${mode}.json`);
+    const directory = path.join(localDataRoot(), "study");
+    const file = path.join(
+      directory,
+      `${id}-${mode}${attempt && attempt !== "legacy" ? `-${attempt}` : ""}.json`,
+    );
     let current: StudyDraft = {
       revision: 0,
       responses: {},

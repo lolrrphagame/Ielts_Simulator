@@ -290,3 +290,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .reading-phrase-bank > div { display: flex; gap: 10px; }
 .reading-phrase-bank dt { font-weight: 700; }
 @media (max-width: 550px) { .reading-phrase-bank { grid-template-columns: minmax(0,1fr); } }
+.reading-attempt-picker { max-width: 780px; background: white; border: 1px solid #cfdbeb; border-radius: 10px; padding: 26px; margin: 24px 0; }
+.reading-attempt-picker h2 { font-size: 22px; font-weight: 700; }
+.reading-attempt-picker p { line-height: 1.7; margin: 12px 0 20px; color: #536780; }
+.resume-reading { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 24px; border-top: 1px solid #d7e1ee; padding-top: 20px; }
+.resume-reading label { min-width: 0; flex: 1; }
+.resume-reading select { display: block; width: 100%; margin: 8px 0 0; }
+.reading-attempt-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; font-size: 13px; color: #526682; }
+.reading-phrase-bank { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 14px; padding: 12px 14px; line-height: 1.45; }
+.reading-phrase-bank > div { display: grid; grid-template-columns: 1em minmax(0,1fr); align-items: baseline; gap: 8px; min-width: 0; }
+.reading-phrase-bank dt, .reading-phrase-bank dd { margin: 0; }
+.reading-phrase-bank dd { overflow-wrap: normal; word-break: normal; }

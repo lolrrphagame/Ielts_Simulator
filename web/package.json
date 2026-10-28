@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "node scripts/local-server.mjs",
     "lint": "eslint",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node scripts/test-unit.mjs",
     "test:e2e": "playwright test",
     "audit:assets": "tsx scripts/audit-assets.ts",
     "content:inventory": "tsx scripts/convert-content.ts inventory",

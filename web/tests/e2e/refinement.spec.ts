@@ -1,3 +1,4 @@
+import { localDataRoot } from "../../src/lib/server/local-data";
 import { test, expect } from "@playwright/test";
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -5,7 +6,7 @@ import path from "node:path";
 test("C19 T1 Reading: verified paragraphs, split resize, selective unhighlight, notes and answer persistence", async ({
   page,
 }) => {
-  const file = path.resolve(".local/study/19-1-reading-practice.json");
+  const file = path.join(localDataRoot(), "study/19-1-reading-practice.json");
   const previous = await readFile(file).catch(() => null);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -19,7 +20,7 @@ test("C19 T1 Reading: verified paragraphs, split resize, selective unhighlight, 
     const key = JSON.parse(
       await readFile("../answers/Cambridge19/T1_Reading.json", "utf8"),
     );
-    await page.goto("/exam/19/1/reading/practice");
+    await page.goto("/exam/19/1/reading/practice?attempt=legacy");
     await expect(page.locator(".reading-passage h2")).toHaveText(
       content.passages[0].title,
     );
@@ -110,7 +111,7 @@ test("C19 T1 Writing and Speaking: single verified tasks, chart zoom, editor per
   page,
 }) => {
   const files = ["19-1-writing-practice", "19-1-speaking-practice"].map((id) =>
-    path.resolve(`.local/study/${id}.json`),
+    path.join(localDataRoot(), `study/${id}.json`),
   );
   const previous = await Promise.all(
     files.map((file) => readFile(file).catch(() => null)),
@@ -236,6 +237,6 @@ test("C19 T1 Listening punctuation, compact map letters and click-to-unhighlight
     ).toHaveText(["Choose a letter", ..."ABCDEFGH"]);
   } finally {
     if (id)
-      await unlink(path.resolve(`.local/attempts/${id}.json`)).catch(() => {});
+      await unlink(path.join(localDataRoot(), `attempts/${id}.json`)).catch(() => {});
   }
 });

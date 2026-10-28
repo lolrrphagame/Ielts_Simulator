@@ -1,3 +1,4 @@
+import { localDataRoot } from "../../src/lib/server/local-data";
 import { test, expect } from "@playwright/test";
 import { readFile, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -156,6 +157,6 @@ test("real C19 T1: all four converted parts, annotations, copy, audio, reload, 4
     ).toBeDisabled();
   } finally {
     if (id)
-      await unlink(path.join(".local/attempts", `${id}.json`)).catch(() => {});
+      await unlink(path.join(localDataRoot(), "attempts", `${id}.json`)).catch(() => {});
   }
 });

@@ -26,6 +26,10 @@ Cambridge 20 Test 1 có xung đột nguồn ở câu 17–18: lưu nhưng không
 
 ## Kiểm tra
 
+Reading: chọn **Start New Attempt** để bắt đầu với đáp án trống, hoặc **Resume Attempt** để tiếp tục bài đã lưu. **Previous saved draft** giữ bài cũ trước khi có cơ chế nhiều lượt làm. Mỗi lượt lưu riêng đáp án, highlight và ghi chú.
+
+Unit/E2E tests dùng thư mục riêng trong `.local/test-runs/`, không ghi vào các phiên thật. Xem [QA Phase 4B.1](../QA_PHASE_4B_1.md).
+
 ```bash
 npm run test
 npm run lint

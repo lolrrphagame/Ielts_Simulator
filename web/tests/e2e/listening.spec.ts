@@ -1,3 +1,4 @@
+import { localDataRoot } from "../../src/lib/server/local-data";
 import { test, expect } from "@playwright/test";
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -7,7 +8,7 @@ const ids: string[] = [];
 test.afterAll(async () => {
   await Promise.all(
     ids.map((id) =>
-      unlink(path.join(".local", "attempts", `${id}.json`)).catch(() => {}),
+      unlink(path.join(localDataRoot(), "attempts", `${id}.json`)).catch(() => {}),
     ),
   );
 });
@@ -206,7 +207,7 @@ test("exam reload keeps deadline; timeout submits saved answers and locks editin
     draftKey,
   );
   ids.push(initial.id);
-  const file = path.join(".local", "attempts", `${initial.id}.json`);
+  const file = path.join(localDataRoot(), "attempts", `${initial.id}.json`);
   await page.reload();
   await expect(
     page.getByLabel("Answer for question 1", { exact: true }),

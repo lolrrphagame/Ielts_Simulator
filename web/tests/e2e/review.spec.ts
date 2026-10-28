@@ -1,3 +1,4 @@
+import { localDataRoot } from "../../src/lib/server/local-data";
 import { test, expect } from "@playwright/test";
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -9,7 +10,7 @@ test("private review, OCR annotations, autosave, Writing crops and verified Spea
     "19-1-listening-review",
     "19-1-writing-review",
     "19-1-speaking-review",
-  ].map((id) => path.resolve(`.local/study/${id}.json`));
+  ].map((id) => path.join(localDataRoot(), `study/${id}.json`));
   const originals = await Promise.all(
     files.map((file) => readFile(file).catch(() => null)),
   );

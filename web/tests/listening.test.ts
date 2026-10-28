@@ -1,3 +1,4 @@
+import { localDataRoot } from "../src/lib/server/local-data";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, unlink } from "node:fs/promises";
@@ -181,7 +182,7 @@ test("server persistence, optimistic concurrency, idempotent submission and dead
     });
     const onDisk = JSON.parse(
       await readFile(
-        path.join(".local", "attempts", `${initial.id}.json`),
+        path.join(localDataRoot(), "attempts", `${initial.id}.json`),
         "utf8",
       ),
     );
@@ -213,7 +214,7 @@ test("server persistence, optimistic concurrency, idempotent submission and dead
   } finally {
     await Promise.all(
       created.map((id) =>
-        unlink(path.join(".local", "attempts", `${id}.json`)),
+        unlink(path.join(localDataRoot(), "attempts", `${id}.json`)),
       ),
     );
   }

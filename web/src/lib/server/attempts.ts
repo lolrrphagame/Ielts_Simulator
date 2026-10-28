@@ -7,6 +7,7 @@ import { loadTest, readKey } from "./assets";
 import { loadQuestionDocument } from "./question-content";
 import { validateAnchors } from "../listening/content";
 import { isVerified } from "./conversion-store";
+import { localDataRoot } from "./local-data";
 
 export class HttpError extends Error {
   constructor(
@@ -16,7 +17,7 @@ export class HttpError extends Error {
     super(message);
   }
 }
-const directory = path.join(process.cwd(), ".local", "attempts");
+const directory = path.join(localDataRoot(), "attempts");
 const globals = globalThis as typeof globalThis & {
   ieltsLocks?: Map<string, Promise<unknown>>;
 };

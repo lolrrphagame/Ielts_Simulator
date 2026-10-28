@@ -7,6 +7,7 @@ import type { Annotation, TextAnchor } from "@/lib/listening/content";
 import type { StudyDraft } from "@/lib/server/study-drafts";
 import { selectedAnchors } from "./listening/text-selection";
 import { StudyWorkspace } from "./study-workspace";
+import { ReadingAttemptPicker } from "./reading-attempt-picker";
 
 export function ContentReview({
   initialUnit = "19-1-listening",
@@ -67,11 +68,60 @@ export function ContentReview({
           </select>
         </label>
       )}
-      <ReviewUnit key={`${unit}-${mode}`} id={unit} mode={mode} />
+      {unit.endsWith("-reading") && mode !== "review" ? (
+        <ReadingSession key={`${unit}-${mode}`} id={unit} mode={mode} />
+      ) : (
+        <ReviewUnit key={`${unit}-${mode}`} id={unit} mode={mode} />
+      )}
     </main>
   );
 }
-function ReviewUnit({ id, mode }: { id: string; mode: string }) {
+function ReadingSession({ id, mode }: { id: string; mode: string }) {
+  const [attempt, setAttempt] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAttempt(new URLSearchParams(window.location.search).get("attempt"));
+      setReady(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+  function open(id: string | null) {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("attempt", id);
+    else url.searchParams.delete("attempt");
+    url.searchParams.delete("passage");
+    window.history.replaceState(null, "", url);
+    setAttempt(id);
+  }
+  if (!ready) return <p>Loading attempts…</p>;
+  return attempt ? (
+    <>
+      <div className="reading-attempt-controls">
+        <span>
+          {attempt === "legacy"
+            ? "Previous saved draft"
+            : `Attempt ${attempt.slice(0, 8)}`}
+        </span>
+        <button className="secondary-button" onClick={() => open(null)}>
+          Choose Attempt
+        </button>
+      </div>
+      <ReviewUnit key={attempt} id={id} mode={mode} attempt={attempt} />
+    </>
+  ) : (
+    <ReadingAttemptPicker unit={id} mode={mode} onOpen={open} />
+  );
+}
+function ReviewUnit({
+  id,
+  mode,
+  attempt,
+}: {
+  id: string;
+  mode: string;
+  attempt?: string;
+}) {
   const [detail, setDetail] = useState<ConversionDetail | null>(null);
   const [draft, setDraft] = useState<StudyDraft | null>(null);
   const current = useRef<StudyDraft | null>(null);
@@ -88,7 +138,8 @@ function ReviewUnit({ id, mode }: { id: string; mode: string }) {
   const sequence = useRef(0);
   const revision = useRef(0);
   const chain = useRef<Promise<unknown>>(Promise.resolve());
-  const storageKey = `ielts:study:${id}:${mode}`;
+  const storageKey = `ielts:study:${id}:${mode}${attempt && attempt !== "legacy" ? `:${attempt}` : ""}`;
+  const endpoint = `/api/private/study/${id}?mode=${mode}${attempt ? `&attempt=${encodeURIComponent(attempt)}` : ""}`;
   function keep(value: StudyDraft) {
     current.current = value;
     setDraft(value);
@@ -105,7 +156,7 @@ function ReviewUnit({ id, mode }: { id: string; mode: string }) {
         const auth = await fetch("/api/local-session", { method: "POST" });
         if (!auth.ok)
           throw new Error("Start the local server to access private content.");
-        const response = await fetch(`/api/private/study/${id}?mode=${mode}`, {
+        const response = await fetch(endpoint, {
           cache: "no-store",
         });
         const body = await response.json();
@@ -129,7 +180,7 @@ function ReviewUnit({ id, mode }: { id: string; mode: string }) {
     return () => {
       live = false;
     };
-  }, [id, mode, storageKey]);
+  }, [endpoint, storageKey]);
   useEffect(() => {
     if (!edit) return;
     const timer = setTimeout(() => {
@@ -140,14 +191,11 @@ function ReviewUnit({ id, mode }: { id: string; mode: string }) {
           if (!value) return;
           const sent = sequence.current;
           try {
-            const response = await fetch(
-              `/api/private/study/${id}?mode=${mode}`,
-              {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...value, revision: revision.current }),
-              },
-            );
+            const response = await fetch(endpoint, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...value, revision: revision.current }),
+            });
             const body = await response.json();
             if (!response.ok) throw new Error(body.error);
             revision.current = body.data.revision;
@@ -167,7 +215,7 @@ function ReviewUnit({ id, mode }: { id: string; mode: string }) {
         });
     }, 650);
     return () => clearTimeout(timer);
-  }, [edit, id, mode, storageKey]);
+  }, [edit, endpoint, storageKey]);
   useEffect(() => {
     const update = () => {
       if (!root.current) return;
@@ -194,7 +242,16 @@ function ReviewUnit({ id, mode }: { id: string; mode: string }) {
   }
   if (!detail || !draft)
     return <p role="alert">{error || "Loading private content…"}</p>;
-  if (mode !== "review") return <StudyWorkspace detail={detail} draft={draft} onChange={change} status={status} error={error} />;
+  if (mode !== "review")
+    return (
+      <StudyWorkspace
+        detail={detail}
+        draft={draft}
+        onChange={change}
+        status={status}
+        error={error}
+      />
+    );
   const page = detail.pages[pageIndex];
   const contentId = `${id}-${page.name}-${page.ocr?.sourceSha256.slice(0, 12) ?? "source"}`;
   const annotations = draft.annotations.filter(
